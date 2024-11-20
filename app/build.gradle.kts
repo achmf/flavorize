@@ -42,6 +42,15 @@ android {
 }
 
 dependencies {
+    // Glide
+    implementation (libs.glide)
+
+
+    // Supabase Storage
+    implementation ("io.github.jan-tennert.supabase:postgrest-kt:3.0.2")
+    implementation("io.github.jan-tennert.supabase:storage-kt:3.0.2")
+    implementation ("io.ktor:ktor-client-android:3.0.1")
+
     // Firebase Setup
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -58,6 +67,7 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.runtime.android)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

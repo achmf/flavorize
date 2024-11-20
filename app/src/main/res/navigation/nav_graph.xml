@@ -12,10 +12,10 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_create_recipe"
-        android:name="com.example.flavorize.ui.fragments.create.CreateRecipeFragment"
-        android:label="@string/title_create_recipe"
-        tools:layout="@layout/fragment_create_recipe" />
+        android:id="@+id/navigation_recipes"
+        android:name="com.example.flavorize.ui.fragments.recipes.RecipesFragment"
+        android:label="@string/title_recipes"
+        tools:layout="@layout/fragment_recipes" />
 
     <fragment
         android:id="@+id/navigation_profile"
