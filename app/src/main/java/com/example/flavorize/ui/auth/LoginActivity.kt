@@ -3,23 +3,24 @@ package com.example.flavorize.ui.auth
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import com.example.flavorize.MainActivity
 import com.example.flavorize.R
 import com.example.flavorize.databinding.ActivityLoginBinding
+import com.example.flavorize.ui.auth.viewmodel.LoginViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var googleSignInClient: GoogleSignInClient
-    private lateinit var auth: FirebaseAuth
+    private val viewModel: LoginViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,11 +34,25 @@ class LoginActivity : AppCompatActivity() {
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
-        auth = FirebaseAuth.getInstance()
+        viewModel.setGoogleSignInClient(googleSignInClient)
 
         binding.loginButton.setOnClickListener {
             signIn()
         }
+
+        viewModel.isSignInSuccessful.observe(this, Observer { isSuccessful ->
+            if (isSuccessful) {
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+        })
+
+        viewModel.errorMessage.observe(this, Observer { message ->
+            message?.let {
+                // Show error message to the user
+                android.util.Log.e("LoginActivity", it)
+            }
+        })
     }
 
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -45,34 +60,17 @@ class LoginActivity : AppCompatActivity() {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account: GoogleSignInAccount = task.getResult(ApiException::class.java)
-                firebaseAuthWithGoogle(account.idToken!!)
+                viewModel.firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                e.printStackTrace()
+                viewModel.setErrorMessage(e.message)
             }
         }
     }
 
     private fun signIn() {
-        // Sign out from previous Google account to allow account selection
-        googleSignInClient.signOut().addOnCompleteListener {
+        viewModel.signOutPreviousAccount().addOnCompleteListener {
             val signInIntent = googleSignInClient.signInIntent
             signInLauncher.launch(signInIntent)
         }
-    }
-
-    private fun firebaseAuthWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, navigate to MainActivity
-                    val user = auth.currentUser
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
-                } else {
-                    // If sign in fails, display a message to the user.
-                    task.exception?.printStackTrace()
-                }
-            }
     }
 }
