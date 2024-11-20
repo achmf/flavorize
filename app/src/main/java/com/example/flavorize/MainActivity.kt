@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         val navController = navHostFragment.navController
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home, R.id.navigation_create_recipe, R.id.navigation_profile
+                R.id.navigation_home, R.id.navigation_recipes, R.id.navigation_profile
             ), binding.drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.navigateToCreateRecipe.observe(this) { shouldNavigate ->
             if (shouldNavigate) {
-                navController.navigate(R.id.navigation_create_recipe)
+                navController.navigate(R.id.navigation_recipes)
                 viewModel.onNavigatedToCreateRecipe()
             }
         }

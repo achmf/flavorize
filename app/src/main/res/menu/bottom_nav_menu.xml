@@ -5,9 +5,9 @@
         android:icon="@drawable/ic_home"
         android:title="@string/title_home" />
     <item
-        android:id="@+id/navigation_create_recipe"
+        android:id="@+id/navigation_recipes"
         android:icon="@drawable/ic_create"
-        android:title="@string/title_create_recipe" />
+        android:title="@string/title_recipes" />
     <item
         android:id="@+id/navigation_profile"
         android:icon="@drawable/ic_profile"

@@ -41,6 +41,15 @@
             android:hint="Cooking Time"
             android:minHeight="48dp" />
 
+        <ImageView
+            android:id="@+id/recipeImageView"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="16dp"
+            android:contentDescription="Recipe Image"
+            android:scaleType="centerCrop"
+            android:src="@android:drawable/ic_menu_camera" />
+
         <LinearLayout
             android:id="@+id/recipeIngredientsLayout"
             android:layout_width="match_parent"
