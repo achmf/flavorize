@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.data.FirestoreRepository
 import com.example.flavorize.databinding.FragmentRecipesBinding
 import com.example.flavorize.ui.createform.CreateRecipeFormActivity
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class RecipesFragment : Fragment() {
@@ -19,16 +20,31 @@ class RecipesFragment : Fragment() {
     private val binding get() = _binding!!
     private val firestoreRepository = FirestoreRepository()
     private val recipesAdapter = RecipesAdapter(listOf())
+    private var fetchJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentRecipesBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        binding.recipesRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setupRecyclerView()
+        setupListeners()
+        fetchRecipes()
+    }
+
+    private fun setupRecyclerView() {
+        val gridLayoutManager = GridLayoutManager(requireContext(), 2) // Set 2 columns
+        binding.recipesRecyclerView.layoutManager = gridLayoutManager
         binding.recipesRecyclerView.adapter = recipesAdapter
+    }
 
+    private fun setupListeners() {
         binding.searchBar.addTextChangedListener { text ->
             filterRecipes(text.toString())
         }
@@ -36,14 +52,11 @@ class RecipesFragment : Fragment() {
         binding.createRecipeButton.setOnClickListener {
             startActivity(Intent(requireContext(), CreateRecipeFormActivity::class.java))
         }
-
-        fetchRecipes()
-
-        return binding.root
     }
 
     private fun fetchRecipes() {
-        lifecycleScope.launch {
+        fetchJob?.cancel()
+        fetchJob = lifecycleScope.launch {
             val result = firestoreRepository.getAllRecipes()
             if (result.isSuccess) {
                 recipesAdapter.updateRecipes(result.getOrDefault(emptyList()))
@@ -62,5 +75,6 @@ class RecipesFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        fetchJob?.cancel()
     }
 }

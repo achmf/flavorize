@@ -8,6 +8,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -15,6 +16,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.flavorize.databinding.ActivityMainBinding
 import com.example.flavorize.ui.auth.LoginActivity
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -60,10 +62,12 @@ class MainActivity : AppCompatActivity() {
         binding.navView.setupWithNavController(navController)
         binding.bottomNavView.setupWithNavController(navController)
 
-        viewModel.navigateToCreateRecipe.observe(this) { shouldNavigate ->
-            if (shouldNavigate) {
-                navController.navigate(R.id.navigation_recipes)
-                viewModel.onNavigatedToCreateRecipe()
+        lifecycleScope.launch {
+            viewModel.navigateToCreateRecipe.observe(this@MainActivity) { shouldNavigate ->
+                if (shouldNavigate) {
+                    navController.navigate(R.id.navigation_recipes)
+                    viewModel.onNavigatedToCreateRecipe()
+                }
             }
         }
     }
@@ -73,4 +77,5 @@ class MainActivity : AppCompatActivity() {
         val navController = navHostFragment.navController
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
+
 }

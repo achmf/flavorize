@@ -15,12 +15,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var googleSignInClient: GoogleSignInClient
     private val viewModel: LoginViewModel by viewModels()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +45,10 @@ class LoginActivity : AppCompatActivity() {
 
         viewModel.isSignInSuccessful.observe(this, Observer { isSuccessful ->
             if (isSuccessful) {
+                // Save user information to Firestore
+                auth.currentUser?.let { user ->
+                    viewModel.saveUserToFirestore(user.uid, user.displayName ?: "Unknown User")
+                }
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             }
