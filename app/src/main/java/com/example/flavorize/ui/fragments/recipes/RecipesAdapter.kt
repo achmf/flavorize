@@ -13,8 +13,9 @@ class RecipesAdapter(var allRecipes: List<Recipe>) : RecyclerView.Adapter<Recipe
         fun bind(recipe: Recipe) {
             binding.recipeNameTextView.text = recipe.name
             binding.recipeDescriptionTextView.text = recipe.description
-            binding.recipeServingsTextView.text = "Servings: ${recipe.servings}"
-            binding.recipeCookingTimeTextView.text = "Cooking Time: ${recipe.cookingTime}"
+            binding.recipeServingsTextView.text = "${recipe.servings}"
+            binding.recipeCookingTimeTextView.text = "${recipe.cookingTime} min"
+            binding.recipeUserNameTextView.text = "by ${recipe.userName}"
 
             // Load image using Glide
             Glide.with(binding.root.context)

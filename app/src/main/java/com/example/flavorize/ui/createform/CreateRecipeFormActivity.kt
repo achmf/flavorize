@@ -5,22 +5,18 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import com.example.flavorize.R
-import com.example.flavorize.data.FirestoreRepository
+import androidx.lifecycle.lifecycleScope
 import com.example.flavorize.data.Recipe
+import com.example.flavorize.data.SupabaseStorageRepository
 import com.example.flavorize.databinding.ActivityCreateRecipeFormBinding
 import com.example.flavorize.ui.createform.viewmodel.CreateRecipeViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.util.UUID
@@ -30,14 +26,34 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCreateRecipeFormBinding
     private val viewModel: CreateRecipeViewModel by viewModels()
     private var imageUri: Uri? = null
+    private var uploadJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCreateRecipeFormBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val addIngredientButton: Button = findViewById(R.id.addIngredientButton)
-        val recipeIngredientsLayout: LinearLayout = findViewById(R.id.recipeIngredientsLayout)
+        setupToolbar() // Setup Toolbar
+        setupUI()
+        observeViewModel()
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true) // Menampilkan tombol kembali
+            title = "Create Recipe" // Set title di tengah toolbar
+        }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish() // Menutup activity dan kembali ke halaman sebelumnya
+        return true
+    }
+
+    private fun setupUI() {
+        val addIngredientButton = binding.addIngredientButton
+        val recipeIngredientsLayout = binding.recipeIngredientsLayout
 
         addIngredientButton.setOnClickListener {
             val ingredientEditText = EditText(this)
@@ -49,8 +65,8 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             recipeIngredientsLayout.addView(ingredientEditText, recipeIngredientsLayout.childCount - 1)
         }
 
-        val addInstructionButton: Button = findViewById(R.id.addInstructionButton)
-        val recipeInstructionsLayout: LinearLayout = findViewById(R.id.recipeInstructionsLayout)
+        val addInstructionButton = binding.addInstructionButton
+        val recipeInstructionsLayout = binding.recipeInstructionsLayout
 
         addInstructionButton.setOnClickListener {
             val instructionEditText = EditText(this)
@@ -62,7 +78,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             recipeInstructionsLayout.addView(instructionEditText, recipeInstructionsLayout.childCount - 1)
         }
 
-        val recipeImageView: ImageView = findViewById(R.id.recipeImageView)
+        val recipeImageView = binding.recipeImageView
         recipeImageView.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             pickImageLauncher.launch(intent)
@@ -72,7 +88,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             val recipeName = binding.recipeNameEditText.text.toString()
             val recipeDescription = binding.recipeDescriptionEditText.text.toString()
             val recipePortions = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
-            val recipeCookingTime = binding.recipeCookingTimeEditText.text.toString()
+            val recipeCookingTime = binding.recipeCookingTimeEditText.text.toString().toIntOrNull() ?: 0
 
             val ingredients = mutableListOf<String>()
             for (i in 0 until recipeIngredientsLayout.childCount) {
@@ -102,15 +118,6 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                 Toast.makeText(this, "Please select an image for the recipe", Toast.LENGTH_SHORT).show()
             }
         }
-
-        viewModel.addRecipeResult.observe(this, Observer { result ->
-            if (result.isSuccess) {
-                Toast.makeText(this, "Recipe added successfully", Toast.LENGTH_SHORT).show()
-                finish()
-            } else {
-                Toast.makeText(this, "Failed to add recipe: ${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
-            }
-        })
     }
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -120,14 +127,26 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         }
     }
 
-    private fun uploadImageAndSaveRecipe(name: String, description: String, servings: Int, cookingTime: String, ingredients: List<String>, instructions: List<String>) {
+    private fun observeViewModel() {
+        viewModel.addRecipeResult.observe(this) { result ->
+            if (result.isSuccess) {
+                Toast.makeText(this, "Recipe added successfully", Toast.LENGTH_SHORT).show()
+                finish()
+            } else {
+                Toast.makeText(this, "Failed to add recipe: ${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun uploadImageAndSaveRecipe(name: String, description: String, servings: Int, cookingTime: Int, ingredients: List<String>, instructions: List<String>) {
         imageUri?.let { uri ->
             val inputStream: InputStream? = contentResolver.openInputStream(uri)
             inputStream?.let {
                 val imageData = it.readBytes()
                 val imageName = UUID.randomUUID().toString()
-                CoroutineScope(Dispatchers.IO).launch {
-                    val response = FirestoreRepository().uploadRecipeImage(imageData, imageName)
+                uploadJob?.cancel()
+                uploadJob = lifecycleScope.launch {
+                    val response = SupabaseStorageRepository().uploadRecipeImage(imageData, imageName)
                     if (response.isSuccess) {
                         val imageUrl = response.getOrNull()
                         if (imageUrl != null) {
@@ -135,7 +154,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                                 name = name,
                                 description = description,
                                 servings = servings,
-                                cookingTime = cookingTime,
+                                cookingTime = cookingTime.toString(),
                                 ingredients = ingredients,
                                 instructions = instructions,
                                 imageUrl = imageUrl
@@ -150,5 +169,10 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        uploadJob?.cancel()
     }
 }

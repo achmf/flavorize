@@ -10,6 +10,7 @@ data class Recipe(
     val cookingTime: String = "",
     val ingredients: List<String> = emptyList(),
     val instructions: List<String> = emptyList(),
-    val userId: String = "", // Add userId to track the user who created the recipe
-    val imageUrl: String = "" // Add imageUrl to store the uploaded image of the recipe
+    val userId: String = "",
+    val imageUrl: String = "",
+    val userName: String = "Unknown User" // Add userName to track the user's name who created the recipe
 )
