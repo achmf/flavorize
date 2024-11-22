@@ -19,6 +19,7 @@ constraintlayout = "2.2.0"
 navigationFragmentKtx = "2.8.4"
 navigationUiKtx = "2.8.4"
 playServicesAuth = "21.2.0"
+roomCompiler = "2.6.1"
 runtimeAndroid = "1.7.5"
 firebaseAuthCommon = "9.8.0"
 firebaseAuthKtx = "23.1.0"
@@ -28,10 +29,14 @@ firebaseDatabase = "21.0.0"
 firebaseFirestoreKtx = "25.1.1"
 storageKtx = "<latest_version>"
 firebaseStorageKtx = "21.0.1"
+roomCommon = "2.6.1"
+roomKtx = "2.6.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCompiler" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-bom-v3102 = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBomVersion" }
@@ -58,6 +63,8 @@ firebase-database = { group = "com.google.firebase", name = "firebase-database",
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 storage-ktx = { module = "io.supabase:storage-ktx", version.ref = "storageKtx" }
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
+androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

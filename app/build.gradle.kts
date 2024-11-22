@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
+    id("kotlin-kapt")
 }
 
 android {
@@ -68,6 +69,14 @@ dependencies {
     implementation(libs.androidx.runtime.android)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
+
+    // Room Database
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler) // Tambahkan ini untuk Room Compiler
+
+    implementation("com.google.code.gson:gson:2.11.0") // Versi terbaru GSON
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
