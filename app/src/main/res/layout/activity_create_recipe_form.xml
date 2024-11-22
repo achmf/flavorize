@@ -116,6 +116,15 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp" />
 
+            <Button
+                android:id="@+id/draftRecipeButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save as Draft"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp" />
+
+
         </LinearLayout>
     </ScrollView>
 

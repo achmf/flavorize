@@ -12,6 +12,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.flavorize.data.recipedraft.DraftRecipe
+import com.example.flavorize.data.recipedraft.DraftRecipeDatabase
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.data.SupabaseStorageRepository
 import com.example.flavorize.databinding.ActivityCreateRecipeFormBinding
@@ -27,13 +29,16 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     private val viewModel: CreateRecipeViewModel by viewModels()
     private var imageUri: Uri? = null
     private var uploadJob: Job? = null
+    private val draftDao by lazy { DraftRecipeDatabase.getDatabase(this).draftRecipeDao() }
+    private var isSubmitClicked = false
+    private var isDraftClicked = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCreateRecipeFormBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupToolbar() // Setup Toolbar
+        setupToolbar()
         setupUI()
         observeViewModel()
     }
@@ -41,17 +46,31 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true) // Menampilkan tombol kembali
-            title = "Create Recipe" // Set title di tengah toolbar
+            setDisplayHomeAsUpEnabled(true)
+            title = "Create Recipe"
         }
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish() // Menutup activity dan kembali ke halaman sebelumnya
+        finish()
         return true
     }
 
     private fun setupUI() {
+        binding.submitRecipeButton.setOnClickListener {
+            if (!isSubmitClicked) {
+                isSubmitClicked = true
+                handlePostRecipe()
+            }
+        }
+
+        binding.draftRecipeButton.setOnClickListener {
+            if (!isDraftClicked) {
+                isDraftClicked = true
+                handleSaveDraft()
+            }
+        }
+
         val addIngredientButton = binding.addIngredientButton
         val recipeIngredientsLayout = binding.recipeIngredientsLayout
 
@@ -62,7 +81,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             ingredientEditText.hint = "Ingredient"
-            recipeIngredientsLayout.addView(ingredientEditText, recipeIngredientsLayout.childCount - 1)
+            recipeIngredientsLayout.addView(ingredientEditText)
         }
 
         val addInstructionButton = binding.addInstructionButton
@@ -75,48 +94,13 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             instructionEditText.hint = "Instruction"
-            recipeInstructionsLayout.addView(instructionEditText, recipeInstructionsLayout.childCount - 1)
+            recipeInstructionsLayout.addView(instructionEditText)
         }
 
         val recipeImageView = binding.recipeImageView
         recipeImageView.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             pickImageLauncher.launch(intent)
-        }
-
-        binding.submitRecipeButton.setOnClickListener {
-            val recipeName = binding.recipeNameEditText.text.toString()
-            val recipeDescription = binding.recipeDescriptionEditText.text.toString()
-            val recipePortions = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
-            val recipeCookingTime = binding.recipeCookingTimeEditText.text.toString().toIntOrNull() ?: 0
-
-            val ingredients = mutableListOf<String>()
-            for (i in 0 until recipeIngredientsLayout.childCount) {
-                val view = recipeIngredientsLayout.getChildAt(i)
-                if (view is EditText) {
-                    val ingredient = view.text.toString()
-                    if (ingredient.isNotBlank()) {
-                        ingredients.add(ingredient)
-                    }
-                }
-            }
-
-            val instructions = mutableListOf<String>()
-            for (i in 0 until recipeInstructionsLayout.childCount) {
-                val view = recipeInstructionsLayout.getChildAt(i)
-                if (view is EditText) {
-                    val instruction = view.text.toString()
-                    if (instruction.isNotBlank()) {
-                        instructions.add(instruction)
-                    }
-                }
-            }
-
-            if (imageUri != null) {
-                uploadImageAndSaveRecipe(recipeName, recipeDescription, recipePortions, recipeCookingTime, ingredients, instructions)
-            } else {
-                Toast.makeText(this, "Please select an image for the recipe", Toast.LENGTH_SHORT).show()
-            }
         }
     }
 
@@ -133,12 +117,37 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                 Toast.makeText(this, "Recipe added successfully", Toast.LENGTH_SHORT).show()
                 finish()
             } else {
+                isSubmitClicked = false // Allow user to retry if there is a failure
                 Toast.makeText(this, "Failed to add recipe: ${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun uploadImageAndSaveRecipe(name: String, description: String, servings: Int, cookingTime: Int, ingredients: List<String>, instructions: List<String>) {
+    private fun handlePostRecipe() {
+        val recipe = getCurrentRecipe()
+        if (recipe != null) {
+            uploadImageAndSaveRecipe(recipe)
+        } else {
+            isSubmitClicked = false // Reset state if validation fails
+            Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun handleSaveDraft() {
+        val recipe = getCurrentDraftRecipe()
+        if (recipe != null) {
+            lifecycleScope.launch {
+                draftDao.insertDraft(recipe)
+                Toast.makeText(this@CreateRecipeFormActivity, "Recipe saved as draft", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        } else {
+            isDraftClicked = false // Reset state if validation fails
+            Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun uploadImageAndSaveRecipe(recipe: Recipe) {
         imageUri?.let { uri ->
             val inputStream: InputStream? = contentResolver.openInputStream(uri)
             inputStream?.let {
@@ -150,25 +159,98 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                     if (response.isSuccess) {
                         val imageUrl = response.getOrNull()
                         if (imageUrl != null) {
-                            val recipe = Recipe(
-                                name = name,
-                                description = description,
-                                servings = servings,
-                                cookingTime = cookingTime.toString(),
-                                ingredients = ingredients,
-                                instructions = instructions,
-                                imageUrl = imageUrl
-                            )
-                            viewModel.addRecipe(recipe)
+                            val recipeToPost = recipe.copy(imageUrl = imageUrl)
+                            viewModel.addRecipe(recipeToPost)
                         }
                     } else {
-                        runOnUiThread {
-                            Toast.makeText(this@CreateRecipeFormActivity, "Failed to upload image: ${response.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
-                        }
+                        isSubmitClicked = false // Allow user to retry if upload fails
+                        Toast.makeText(this@CreateRecipeFormActivity, "Failed to upload image", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
+    }
+
+    private fun getCurrentRecipe(): Recipe? {
+        val name = binding.recipeNameEditText.text.toString()
+        val description = binding.recipeDescriptionEditText.text.toString()
+        val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
+        val cookingTime = binding.recipeCookingTimeEditText.text.toString().toIntOrNull() ?: 0
+
+        val ingredients = mutableListOf<String>()
+        for (i in 0 until binding.recipeIngredientsLayout.childCount) {
+            val view = binding.recipeIngredientsLayout.getChildAt(i)
+            if (view is EditText) {
+                val ingredient = view.text.toString()
+                if (ingredient.isNotBlank()) {
+                    ingredients.add(ingredient)
+                }
+            }
+        }
+
+        val instructions = mutableListOf<String>()
+        for (i in 0 until binding.recipeInstructionsLayout.childCount) {
+            val view = binding.recipeInstructionsLayout.getChildAt(i)
+            if (view is EditText) {
+                val instruction = view.text.toString()
+                if (instruction.isNotBlank()) {
+                    instructions.add(instruction)
+                }
+            }
+        }
+
+        return if (name.isNotBlank() && description.isNotBlank()) {
+            Recipe(
+                name = name,
+                description = description,
+                servings = servings,
+                cookingTime = cookingTime.toString(),
+                ingredients = ingredients,
+                instructions = instructions,
+                imageUrl = ""
+            )
+        } else null
+    }
+
+    private fun getCurrentDraftRecipe(): DraftRecipe? {
+        val name = binding.recipeNameEditText.text.toString()
+        val description = binding.recipeDescriptionEditText.text.toString()
+        val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
+        val cookingTime = binding.recipeCookingTimeEditText.text.toString().toIntOrNull() ?: 0
+
+        val ingredients = mutableListOf<String>()
+        for (i in 0 until binding.recipeIngredientsLayout.childCount) {
+            val view = binding.recipeIngredientsLayout.getChildAt(i)
+            if (view is EditText) {
+                val ingredient = view.text.toString()
+                if (ingredient.isNotBlank()) {
+                    ingredients.add(ingredient)
+                }
+            }
+        }
+
+        val instructions = mutableListOf<String>()
+        for (i in 0 until binding.recipeInstructionsLayout.childCount) {
+            val view = binding.recipeInstructionsLayout.getChildAt(i)
+            if (view is EditText) {
+                val instruction = view.text.toString()
+                if (instruction.isNotBlank()) {
+                    instructions.add(instruction)
+                }
+            }
+        }
+
+        return if (name.isNotBlank() && description.isNotBlank()) {
+            DraftRecipe(
+                name = name,
+                description = description,
+                servings = servings,
+                cookingTime = cookingTime,
+                ingredients = ingredients,
+                instructions = instructions,
+                imageUri = imageUri?.toString()
+            )
+        } else null
     }
 
     override fun onDestroy() {
