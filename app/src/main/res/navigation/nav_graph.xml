@@ -23,4 +23,10 @@
         android:label="@string/title_profile"
         tools:layout="@layout/fragment_profile" />
 
+    <fragment
+        android:id="@+id/navigation_my_recipes"
+        android:name="com.example.flavorize.ui.fragments.myrecipe.MyRecipesFragment"
+        android:label="@string/my_recipes"
+        tools:layout="@layout/fragment_my_recipes" />
+
 </navigation>
