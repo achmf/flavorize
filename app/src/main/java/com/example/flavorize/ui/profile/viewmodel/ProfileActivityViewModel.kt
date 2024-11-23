@@ -1,4 +1,4 @@
-package com.example.flavorize
+package com.example.flavorize.ui.profile.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -6,11 +6,10 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
-class MainViewModel : ViewModel() {
+class ProfileActivityViewModel : ViewModel() {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    // LiveData for user profile
     private val _userAvatar = MutableLiveData<String?>()
     val userAvatar: LiveData<String?> get() = _userAvatar
 
@@ -20,14 +19,8 @@ class MainViewModel : ViewModel() {
     private val _userEmail = MutableLiveData<String?>()
     val userEmail: LiveData<String?> get() = _userEmail
 
-    // LiveData for search bar visibility
-    private val _isSearchBarVisible = MutableLiveData<Boolean>()
-    val isSearchBarVisible: LiveData<Boolean> get() = _isSearchBarVisible
-
-    init {
-        loadUserProfile()
-        _isSearchBarVisible.value = false // Search bar is hidden initially
-    }
+    private val _isDeleted = MutableLiveData<Boolean>()
+    val isDeleted: LiveData<Boolean> get() = _isDeleted
 
     fun loadUserProfile() {
         val user: FirebaseUser? = auth.currentUser
@@ -38,11 +31,15 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun showSearchBar() {
-        _isSearchBarVisible.value = true
+    fun logout() {
+        auth.signOut()
     }
 
-    fun hideSearchBar() {
-        _isSearchBarVisible.value = false
+    fun deleteAccount() {
+        auth.currentUser?.let { user ->
+            user.delete().addOnCompleteListener { task ->
+                _isDeleted.value = task.isSuccessful
+            }
+        }
     }
 }
