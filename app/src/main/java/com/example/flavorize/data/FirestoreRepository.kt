@@ -41,6 +41,27 @@ class FirestoreRepository {
         }
     }
 
+    suspend fun getRecipesByCurrentUser(): Result<List<Recipe>> {
+        return try {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+                ?: throw Exception("User not authenticated")
+            val snapshot = recipesCollection.whereEqualTo("userId", userId).get().await()
+            val recipes = snapshot.toObjects(Recipe::class.java)
+
+            // Fetch user names for each recipe
+            val recipesWithUserNames = recipes.map { recipe ->
+                val userName = getUserNameById(recipe.userId)
+                recipe.copy(userName = userName)
+            }
+
+            Result.success(recipesWithUserNames)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+
     // Function to get a single recipe by ID
     suspend fun getRecipeById(recipeId: String): Result<Recipe> {
         return try {
