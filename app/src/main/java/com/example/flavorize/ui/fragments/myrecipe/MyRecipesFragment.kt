@@ -34,6 +34,8 @@ class MyRecipesFragment : Fragment() {
         setupRecyclerView()
         observeViewModel()
         setupSearchListener()
+        setupSwipeToRefresh()
+
         viewModel.fetchMyRecipes()
     }
 
@@ -46,6 +48,7 @@ class MyRecipesFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.myRecipes.observe(viewLifecycleOwner) { recipes ->
             recipesAdapter.updateRecipes(recipes)
+            binding.swipeRefreshLayout.isRefreshing = false // Stop the refresh animation
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
@@ -55,6 +58,7 @@ class MyRecipesFragment : Fragment() {
         viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             errorMessage?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                binding.swipeRefreshLayout.isRefreshing = false // Stop the refresh animation
             }
         }
     }
@@ -78,6 +82,12 @@ class MyRecipesFragment : Fragment() {
                         it.description.contains(query, ignoreCase = true)
             }
             recipesAdapter.updateRecipes(filteredRecipes)
+        }
+    }
+
+    private fun setupSwipeToRefresh() {
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            viewModel.fetchMyRecipes() // Fetch the recipes again
         }
     }
 

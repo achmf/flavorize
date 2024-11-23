@@ -73,6 +73,7 @@ dependencies {
     // Room Database
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.swiperefreshlayout)
     kapt(libs.androidx.room.compiler) // Tambahkan ini untuk Room Compiler
 
     implementation("com.google.code.gson:gson:2.11.0") // Versi terbaru GSON
