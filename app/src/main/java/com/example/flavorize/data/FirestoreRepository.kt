@@ -88,16 +88,6 @@ class FirestoreRepository {
         }
     }
 
-    // Function to delete a recipe
-    suspend fun deleteRecipe(recipeId: String): Result<Void?> {
-        return try {
-            recipesCollection.document(recipeId).delete().await()
-            Result.success(null)
-        } catch (e: FirebaseFirestoreException) {
-            Result.failure(e)
-        }
-    }
-
     // Function to get a user's name by ID
     private suspend fun getUserNameById(userId: String): String {
         return try {
