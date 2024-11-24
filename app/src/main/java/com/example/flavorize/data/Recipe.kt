@@ -1,7 +1,10 @@
 package com.example.flavorize.data
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import java.util.UUID
 
+@Parcelize
 data class Recipe(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
@@ -12,5 +15,5 @@ data class Recipe(
     val instructions: List<String> = emptyList(),
     val userId: String = "",
     val imageUrl: String = "",
-    val userName: String = "Unknown User" // Add userName to track the user's name who created the recipe
-)
+    val userName: String = "Unknown User"
+) : Parcelable

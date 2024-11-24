@@ -1,4 +1,4 @@
-package com.example.flavorize.ui.profile.viewmodel
+package com.example.flavorize.ui.activities.profile.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

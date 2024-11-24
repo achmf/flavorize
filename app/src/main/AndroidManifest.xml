@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+    <uses-permission android:name="android.permission.INTERNET" />
+
 
     <application
         android:allowBackup="true"
@@ -9,19 +11,25 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Flavorize">
+        android:theme="@style/Theme.Flavorize" >
         <activity
-            android:name=".ui.profile.ProfileActivity"
+            android:name=".ui.activities.editrecipe.EditRecipeActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.createform.draft.DraftListActivity"
+            android:name=".ui.activities.recipedetail.RecipeDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activities.profile.ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activities.createform.draft.DraftListActivity"
             android:exported="false" />
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,7 +37,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.createform.CreateRecipeFormActivity"
+            android:name=".ui.activities.createform.CreateRecipeFormActivity"
             android:exported="false" />
     </application>
 

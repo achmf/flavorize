@@ -11,8 +11,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.databinding.FragmentRecipesBinding
-import com.example.flavorize.ui.createform.CreateRecipeFormActivity
-import com.example.flavorize.ui.createform.draft.DraftListActivity
+import com.example.flavorize.ui.activities.createform.CreateRecipeFormActivity
+import com.example.flavorize.ui.activities.createform.draft.DraftListActivity
 import com.example.flavorize.ui.fragments.recipes.viewmodel.RecipesFragmentViewModel
 
 class RecipesFragment : Fragment() {

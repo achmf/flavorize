@@ -1,16 +1,21 @@
-package com.example.flavorize.ui.fragments.recipes
+package com.example.flavorize.ui.fragments.myrecipes
 
-import com.example.flavorize.data.Recipe
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.flavorize.ui.activities.editrecipe.EditRecipeActivity
+import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.ItemRecipeCardBinding
 import com.example.flavorize.ui.activities.recipedetail.RecipeDetailActivity
 
-class RecipesAdapter(var allRecipes: List<Recipe>) : RecyclerView.Adapter<RecipesAdapter.RecipeViewHolder>() {
+class MyRecipesAdapter(
+    private var allRecipes: List<Recipe>,
+    private val onDelete: (Recipe) -> Unit
+) : RecyclerView.Adapter<MyRecipesAdapter.RecipeViewHolder>() {
 
     inner class RecipeViewHolder(private val binding: ItemRecipeCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(recipe: Recipe, context: Context) {
@@ -25,12 +30,36 @@ class RecipesAdapter(var allRecipes: List<Recipe>) : RecyclerView.Adapter<Recipe
                 .load(recipe.imageUrl)
                 .into(binding.recipeImageView)
 
-            // Set onClickListener to navigate to RecipeDetailActivity
+            // Set onClickListener to show dialog for Edit/Delete
             binding.root.setOnClickListener {
-                val intent = Intent(context, RecipeDetailActivity::class.java)
-                intent.putExtra("recipe", recipe)
-                context.startActivity(intent)
+                showRecipeOptionsDialog(context, recipe)
             }
+        }
+
+        private fun showRecipeOptionsDialog(context: Context, recipe: Recipe) {
+            val options = arrayOf("View Recipe", "Edit", "Delete")
+            val builder = AlertDialog.Builder(context)
+            builder.setTitle("Select an Action")
+            builder.setItems(options) { _, which ->
+                when (which) {
+                    0 -> navigateToViewRecipe(context, recipe) // View Recipe
+                    1 -> navigateToEditRecipe(context, recipe) // Edit Recipe
+                    2 -> onDelete(recipe) // Delete Recipe
+                }
+            }
+            builder.show()
+        }
+
+        private fun navigateToViewRecipe(context: Context, recipe: Recipe) {
+            val intent = Intent(context, RecipeDetailActivity::class.java)
+            intent.putExtra("recipe", recipe)
+            context.startActivity(intent)
+        }
+
+        private fun navigateToEditRecipe(context: Context, recipe: Recipe) {
+            val intent = Intent(context, EditRecipeActivity::class.java)
+            intent.putExtra("recipe", recipe)
+            context.startActivity(intent)
         }
     }
 

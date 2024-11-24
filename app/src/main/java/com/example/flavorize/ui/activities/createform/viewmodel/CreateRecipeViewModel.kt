@@ -1,4 +1,4 @@
-package com.example.flavorize.ui.createform.viewmodel
+package com.example.flavorize.ui.activities.createform.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

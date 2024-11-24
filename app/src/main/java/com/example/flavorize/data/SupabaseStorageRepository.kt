@@ -22,11 +22,13 @@ class SupabaseStorageRepository {
             val path = "$imageName.jpg"
             val bucket = supabase.storage.from("Recipe Images")
             val response = bucket.upload(path, imageData) {
-                upsert = false
+                upsert = true // Mengizinkan overwrite jika nama file sudah ada
             }
             val imageUrl = bucket.publicUrl(path)
             Result.success(imageUrl)
         } catch (e: Exception) {
+            // Tambahkan logging untuk mengetahui error
+            e.printStackTrace()
             Result.failure(e)
         }
     }
