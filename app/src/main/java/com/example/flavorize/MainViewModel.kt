@@ -29,7 +29,7 @@ class MainViewModel : ViewModel() {
         _isSearchBarVisible.value = false // Search bar is hidden initially
     }
 
-    fun loadUserProfile() {
+    private fun loadUserProfile() {
         val user: FirebaseUser? = auth.currentUser
         if (user != null) {
             _userAvatar.value = user.photoUrl?.toString()

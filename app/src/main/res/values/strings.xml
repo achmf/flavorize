@@ -11,4 +11,9 @@
     <string name="create_recipe_button">Create Recipe Button</string>
     <string name="default_web_client_id">948187058327-q64t6tch7dqgf9k2mq9i8pet721jc470.apps.googleusercontent.com</string>
     <string name="my_recipes">My Recipes</string>
+
+    <!-- Recipes -->
+    <string name="servings_text">%d servings</string>
+    <string name="cooking_time_text">%s minutes</string>
+    <string name="created_by_text">Created by %s</string>
 </resources>

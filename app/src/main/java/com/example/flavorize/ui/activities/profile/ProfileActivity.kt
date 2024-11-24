@@ -1,4 +1,4 @@
-package com.example.flavorize.ui.profile
+package com.example.flavorize.ui.activities.profile
 
 import android.content.Intent
 import android.os.Bundle
@@ -12,7 +12,7 @@ import com.bumptech.glide.Glide
 import com.example.flavorize.R
 import com.example.flavorize.databinding.ActivityProfileBinding
 import com.example.flavorize.ui.auth.LoginActivity
-import com.example.flavorize.ui.profile.viewmodel.ProfileActivityViewModel
+import com.example.flavorize.ui.activities.profile.viewmodel.ProfileActivityViewModel
 
 class ProfileActivity : AppCompatActivity() {
 

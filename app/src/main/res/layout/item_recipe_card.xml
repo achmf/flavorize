@@ -14,7 +14,7 @@
         android:orientation="vertical"
         android:padding="8dp">
 
-        <!-- Recipe Image -->
+        <!-- com.example.flavorize.data.Recipe Image -->
         <ImageView
             android:id="@+id/recipeImageView"
             android:layout_width="match_parent"
@@ -23,7 +23,7 @@
             android:layout_marginBottom="8dp"
             android:background="@drawable/rounded_image_background" />
 
-        <!-- Recipe Name -->
+        <!-- com.example.flavorize.data.Recipe Name -->
         <TextView
             android:id="@+id/recipeNameTextView"
             android:layout_width="match_parent"
@@ -35,7 +35,7 @@
             android:textColor="@color/black"
             android:layout_marginBottom="4dp" />
 
-        <!-- Recipe Description -->
+        <!-- com.example.flavorize.data.Recipe Description -->
         <TextView
             android:id="@+id/recipeDescriptionTextView"
             android:layout_width="match_parent"
@@ -58,7 +58,7 @@
             android:textColor="@color/gray"
             android:layout_marginBottom="8dp" />
 
-        <!-- Recipe Details (Servings and Cooking Time) -->
+        <!-- com.example.flavorize.data.Recipe Details (Servings and Cooking Time) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

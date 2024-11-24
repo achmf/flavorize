@@ -1,4 +1,4 @@
-package com.example.flavorize.ui.createform
+package com.example.flavorize.ui.activities.createform
 
 import android.app.Activity
 import android.content.Intent
@@ -17,7 +17,7 @@ import com.example.flavorize.data.recipedraft.DraftRecipeDatabase
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.data.SupabaseStorageRepository
 import com.example.flavorize.databinding.ActivityCreateRecipeFormBinding
-import com.example.flavorize.ui.createform.viewmodel.CreateRecipeViewModel
+import com.example.flavorize.ui.activities.createform.viewmodel.CreateRecipeViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.InputStream
@@ -138,7 +138,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         if (recipe != null) {
             lifecycleScope.launch {
                 draftDao.insertDraft(recipe)
-                Toast.makeText(this@CreateRecipeFormActivity, "Recipe saved as draft", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CreateRecipeFormActivity, "com.example.flavorize.data.Recipe saved as draft", Toast.LENGTH_SHORT).show()
                 finish()
             }
         } else {
@@ -161,13 +161,26 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                         if (imageUrl != null) {
                             val recipeToPost = recipe.copy(imageUrl = imageUrl)
                             viewModel.addRecipe(recipeToPost)
+                        } else {
+                            isSubmitClicked = false
+                            Toast.makeText(this@CreateRecipeFormActivity, "Image URL not returned", Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        isSubmitClicked = false // Allow user to retry if upload fails
-                        Toast.makeText(this@CreateRecipeFormActivity, "Failed to upload image", Toast.LENGTH_SHORT).show()
+                        isSubmitClicked = false
+                        Toast.makeText(
+                            this@CreateRecipeFormActivity,
+                            "Failed to upload image: ${response.exceptionOrNull()?.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
+            } ?: run {
+                isSubmitClicked = false
+                Toast.makeText(this, "Failed to read image data", Toast.LENGTH_SHORT).show()
             }
+        } ?: run {
+            isSubmitClicked = false
+            Toast.makeText(this, "Please select an image", Toast.LENGTH_SHORT).show()
         }
     }
 

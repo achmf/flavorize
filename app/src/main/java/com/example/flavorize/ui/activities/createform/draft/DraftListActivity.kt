@@ -1,4 +1,4 @@
-package com.example.flavorize.ui.createform.draft
+package com.example.flavorize.ui.activities.createform.draft
 
 import android.os.Bundle
 import android.util.Log

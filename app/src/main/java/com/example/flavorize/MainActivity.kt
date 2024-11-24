@@ -23,7 +23,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
 import com.example.flavorize.databinding.ActivityMainBinding
 import com.example.flavorize.ui.auth.LoginActivity
-import com.example.flavorize.ui.profile.ProfileActivity
+import com.example.flavorize.ui.activities.profile.ProfileActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {

@@ -1,29 +1,29 @@
-package com.example.flavorize.ui.fragments.myrecipe
+package com.example.flavorize.ui.fragments.myrecipes
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.FragmentMyRecipesBinding
-import com.example.flavorize.ui.fragments.recipes.RecipesAdapter
-import com.example.flavorize.ui.fragments.myrecipe.viewmodel.MyRecipesFragmentViewModel
+import com.example.flavorize.ui.fragments.myrecipes.viewmodel.MyRecipesFragmentViewModel
 
 class MyRecipesFragment : Fragment() {
     private var _binding: FragmentMyRecipesBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: MyRecipesFragmentViewModel by viewModels()
-    private val recipesAdapter = RecipesAdapter(listOf())
+    private lateinit var myRecipesAdapter: MyRecipesAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentMyRecipesBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -32,63 +32,66 @@ class MyRecipesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
-        observeViewModel()
-        setupSearchListener()
         setupSwipeToRefresh()
+        observeViewModel()
 
         viewModel.fetchMyRecipes()
     }
 
     private fun setupRecyclerView() {
         val gridLayoutManager = GridLayoutManager(requireContext(), 2)
+        myRecipesAdapter = MyRecipesAdapter(
+            allRecipes = listOf(),
+            onDelete = { recipe -> handleDeleteRecipe(recipe) }
+        )
         binding.myRecipesRecyclerView.layoutManager = gridLayoutManager
-        binding.myRecipesRecyclerView.adapter = recipesAdapter
+        binding.myRecipesRecyclerView.adapter = myRecipesAdapter
+    }
+
+    private fun setupSwipeToRefresh() {
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            viewModel.refreshMyRecipes()
+        }
     }
 
     private fun observeViewModel() {
         viewModel.myRecipes.observe(viewLifecycleOwner) { recipes ->
-            recipesAdapter.updateRecipes(recipes)
-            binding.swipeRefreshLayout.isRefreshing = false // Stop the refresh animation
+            myRecipesAdapter.updateRecipes(recipes)
+            binding.swipeRefreshLayout.isRefreshing = false // Stop refreshing animation
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            // Show/hide ProgressBar based on loading state
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             errorMessage?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                binding.swipeRefreshLayout.isRefreshing = false // Stop the refresh animation
+                binding.swipeRefreshLayout.isRefreshing = false // Stop refreshing animation
             }
         }
     }
 
-    private fun setupSearchListener() {
-        binding.searchBar.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                val query = binding.searchBar.text.toString()
-                performSearch(query)
-                true
-            } else {
-                false
-            }
+    private fun handleDeleteRecipe(recipe: Recipe) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Delete Recipe")
+        builder.setMessage("Are you sure you want to delete the recipe \"${recipe.name}\"?")
+        builder.setPositiveButton("Yes") { _, _ ->
+            viewModel.deleteRecipe(
+                recipeId = recipe.id,
+                onSuccess = {
+                    Toast.makeText(requireContext(), "Recipe deleted successfully", Toast.LENGTH_SHORT).show()
+                },
+                onError = { errorMessage ->
+                    Toast.makeText(requireContext(), "Error: $errorMessage", Toast.LENGTH_SHORT).show()
+                }
+            )
         }
-    }
-
-    private fun performSearch(query: String) {
-        viewModel.myRecipes.value?.let { recipes ->
-            val filteredRecipes = recipes.filter {
-                it.name.contains(query, ignoreCase = true) ||
-                        it.description.contains(query, ignoreCase = true)
-            }
-            recipesAdapter.updateRecipes(filteredRecipes)
+        builder.setNegativeButton("No") { dialog, _ ->
+            dialog.dismiss()
         }
-    }
-
-    private fun setupSwipeToRefresh() {
-        binding.swipeRefreshLayout.setOnRefreshListener {
-            viewModel.fetchMyRecipes() // Fetch the recipes again
-        }
+        builder.show()
     }
 
     override fun onDestroyView() {

@@ -71,12 +71,23 @@ class FirestoreRepository {
                 val userName = getUserNameById(recipe.userId)
                 Result.success(recipe.copy(userName = userName))
             } else {
-                Result.failure(Exception("Recipe not found"))
+                Result.failure(Exception("com.example.flavorize.data.Recipe not found"))
             }
         } catch (e: FirebaseFirestoreException) {
             Result.failure(e)
         }
     }
+
+    // Function to delete a recipe by ID
+    suspend fun deleteRecipe(recipeId: String): Result<Void?> {
+        return try {
+            recipesCollection.document(recipeId).delete().await()
+            Result.success(null)
+        } catch (e: FirebaseFirestoreException) {
+            Result.failure(e)
+        }
+    }
+
 
     // Function to update a recipe
     suspend fun updateRecipe(recipeId: String, updatedRecipe: Recipe): Result<Void?> {
