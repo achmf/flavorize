@@ -5,27 +5,26 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.databinding.FragmentRecipesBinding
 import com.example.flavorize.ui.activities.createform.CreateRecipeFormActivity
-import com.example.flavorize.ui.activities.createform.draft.DraftListActivity
 import com.example.flavorize.ui.fragments.recipes.viewmodel.RecipesFragmentViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 class RecipesFragment : Fragment() {
     private var _binding: FragmentRecipesBinding? = null
     private val binding get() = _binding!!
 
     private val recipesViewModel: RecipesFragmentViewModel by viewModels()
-    private val recipesAdapter = RecipesAdapter(listOf())
+    private lateinit var recipesAdapter: RecipesAdapter // Delay initialization
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentRecipesBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -33,12 +32,31 @@ class RecipesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize the adapter after context and userId are available
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        recipesAdapter = RecipesAdapter(
+            allRecipes = mutableListOf(),
+            userId = userId,
+            onBookmarkToggle = { recipe, isBookmarking ->
+                recipesViewModel.toggleBookmark(recipe, isBookmarking, onSuccess = {
+                    recipesAdapter.updateRecipe(recipe.copy(isBookmarked = isBookmarking))
+                    Toast.makeText(
+                        requireContext(),
+                        if (isBookmarking) "Bookmarked!" else "Bookmark removed!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }, onError = {
+                    Toast.makeText(requireContext(), "Error: $it", Toast.LENGTH_SHORT).show()
+                })
+            }
+        )
+
         setupRecyclerView()
         setupListeners()
         setupSwipeToRefresh()
         observeViewModel()
 
-        recipesViewModel.fetchRecipes()
+        recipesViewModel.fetchRecipesWithBookmarks()
     }
 
     private fun setupRecyclerView() {
@@ -48,28 +66,14 @@ class RecipesFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.searchBar.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                val query = binding.searchBar.text.toString()
-                performSearch(query)
-                true
-            } else {
-                false
-            }
-        }
-
         binding.createRecipeButton.setOnClickListener {
             startActivity(Intent(requireContext(), CreateRecipeFormActivity::class.java))
-        }
-
-        binding.draftListButton.setOnClickListener {
-            startActivity(Intent(requireContext(), DraftListActivity::class.java))
         }
     }
 
     private fun setupSwipeToRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            recipesViewModel.fetchRecipes()
+            recipesViewModel.fetchRecipesWithBookmarks()
         }
     }
 
@@ -84,20 +88,21 @@ class RecipesFragment : Fragment() {
         }
 
         recipesViewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
-            if (errorMessage != null) {
-                Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
+            errorMessage?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
                 binding.swipeRefreshLayout.isRefreshing = false // Stop the refresh animation
             }
         }
     }
 
-    private fun performSearch(query: String) {
-        recipesViewModel.recipes.value?.let { recipes ->
-            val filteredRecipes = recipes.filter {
-                it.name.contains(query, ignoreCase = true) ||
-                        it.description.contains(query, ignoreCase = true)
+    fun performSearch(query: String?) {
+        query?.let {
+            recipesViewModel.recipes.value?.let { recipes ->
+                val filteredRecipes = recipes.filter { recipe ->
+                    recipe.name.contains(query, ignoreCase = true) || recipe.description.contains(query, ignoreCase = true)
+                }
+                recipesAdapter.updateRecipes(filteredRecipes)
             }
-            recipesAdapter.updateRecipes(filteredRecipes)
         }
     }
 
