@@ -1,16 +1,21 @@
 package com.example.flavorize.ui.fragments.recipes
 
-import com.example.flavorize.data.Recipe
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.flavorize.R
+import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.ItemRecipeCardBinding
 import com.example.flavorize.ui.activities.recipedetail.RecipeDetailActivity
 
-class RecipesAdapter(var allRecipes: List<Recipe>) : RecyclerView.Adapter<RecipesAdapter.RecipeViewHolder>() {
+class RecipesAdapter(
+    private var allRecipes: MutableList<Recipe>, // Use MutableList for easier updates
+    private val userId: String,
+    private val onBookmarkToggle: (Recipe, Boolean) -> Unit
+) : RecyclerView.Adapter<RecipesAdapter.RecipeViewHolder>() {
 
     inner class RecipeViewHolder(private val binding: ItemRecipeCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(recipe: Recipe, context: Context) {
@@ -20,12 +25,24 @@ class RecipesAdapter(var allRecipes: List<Recipe>) : RecyclerView.Adapter<Recipe
             binding.recipeCookingTimeTextView.text = "${recipe.cookingTime} min"
             binding.recipeUserNameTextView.text = "by ${recipe.userName}"
 
-            // Load image using Glide
             Glide.with(context)
                 .load(recipe.imageUrl)
                 .into(binding.recipeImageView)
 
-            // Set onClickListener to navigate to RecipeDetailActivity
+            binding.bookmarkIcon.setImageResource(
+                if (recipe.isBookmarked) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark_border
+            )
+
+            binding.bookmarkIcon.setOnClickListener {
+                val newBookmarkStatus = !recipe.isBookmarked
+                onBookmarkToggle(recipe.copy(isBookmarked = newBookmarkStatus), newBookmarkStatus)
+
+                // Optimistic UI update
+                binding.bookmarkIcon.setImageResource(
+                    if (newBookmarkStatus) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark_border
+                )
+            }
+
             binding.root.setOnClickListener {
                 val intent = Intent(context, RecipeDetailActivity::class.java)
                 intent.putExtra("recipe", recipe)
@@ -43,12 +60,19 @@ class RecipesAdapter(var allRecipes: List<Recipe>) : RecyclerView.Adapter<Recipe
         holder.bind(allRecipes[position], holder.itemView.context)
     }
 
-    override fun getItemCount(): Int {
-        return allRecipes.size
-    }
+    override fun getItemCount(): Int = allRecipes.size
 
     fun updateRecipes(newRecipes: List<Recipe>) {
-        allRecipes = newRecipes
+        allRecipes.clear()
+        allRecipes.addAll(newRecipes)
         notifyDataSetChanged()
+    }
+
+    fun updateRecipe(updatedRecipe: Recipe) {
+        val index = allRecipes.indexOfFirst { it.id == updatedRecipe.id }
+        if (index != -1) {
+            allRecipes[index] = updatedRecipe
+            notifyItemChanged(index)
+        }
     }
 }

@@ -24,6 +24,9 @@ import com.bumptech.glide.Glide
 import com.example.flavorize.databinding.ActivityMainBinding
 import com.example.flavorize.ui.auth.LoginActivity
 import com.example.flavorize.ui.activities.profile.ProfileActivity
+import com.example.flavorize.ui.fragments.home.HomeFragment
+import com.example.flavorize.ui.fragments.myrecipes.MyRecipesFragment
+import com.example.flavorize.ui.fragments.recipes.RecipesFragment
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
@@ -52,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         setupSearchToolbar()
         setupDrawerHeader()
         observeViewModel()
+        setupSearchFunctionality() // NEW
     }
 
     private fun setupDefaultToolbar() {
@@ -106,24 +110,102 @@ class MainActivity : AppCompatActivity() {
         val userName = headerView.findViewById<TextView>(R.id.headerUserName)
         val userEmail = headerView.findViewById<TextView>(R.id.headerUserEmail)
 
-        viewModel.userAvatar.observe(this, Observer { avatarUrl ->
+        viewModel.userAvatar.observe(this) { avatarUrl ->
             Glide.with(this)
                 .load(avatarUrl)
                 .circleCrop()
                 .into(userAvatar)
-        })
+        }
 
-        viewModel.userName.observe(this, Observer { name ->
+        viewModel.userName.observe(this) { name ->
             userName.text = name ?: "Unknown User"
-        })
+        }
 
-        viewModel.userEmail.observe(this, Observer { email ->
+        viewModel.userEmail.observe(this) { email ->
             userEmail.text = email ?: "No Email"
-        })
+        }
 
         // Add onClickListener for profile navigation
         userAvatar.setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
+        }
+
+        binding.navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.navigation_bookmarked -> {
+                    val intent = Intent(this, BookmarkedRecipesActivity::class.java)
+                    startActivity(intent)
+                    binding.drawerLayout.closeDrawers()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun setupSearchFunctionality() {
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.navigation_recipes -> {
+                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView).setOnQueryTextListener(
+                        object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                val currentFragment =
+                                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
+                                if (currentFragment is RecipesFragment) {
+                                    currentFragment.performSearch(query) // Pass the query to RecipesFragment
+                                }
+                                return true
+                            }
+
+                            override fun onQueryTextChange(newText: String?): Boolean {
+                                // Optional: Implement real-time suggestions here
+                                return false
+                            }
+                        }
+                    )
+                }
+
+                R.id.navigation_my_recipes -> {
+                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView).setOnQueryTextListener(
+                        object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                val currentFragment =
+                                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
+                                if (currentFragment is MyRecipesFragment) {
+                                    currentFragment.performSearch(query) // Pass the query to MyRecipesFragment
+                                }
+                                return true
+                            }
+
+                            override fun onQueryTextChange(newText: String?): Boolean {
+                                // Optional: Implement real-time suggestions here
+                                return false
+                            }
+                        }
+                    )
+                }
+
+                R.id.navigation_home -> {
+                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView).setOnQueryTextListener(
+                        object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                val currentFragment =
+                                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
+                                if (currentFragment is HomeFragment) {
+                                    currentFragment.performSearch(query) // Pass the query to HomeFragment
+                                }
+                                return true
+                            }
+
+                            override fun onQueryTextChange(newText: String?): Boolean {
+                                // Optional: Implement real-time suggestions here
+                                return false
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 

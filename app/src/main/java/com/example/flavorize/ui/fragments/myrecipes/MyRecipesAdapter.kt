@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -23,7 +24,10 @@ class MyRecipesAdapter(
             binding.recipeDescriptionTextView.text = recipe.description
             binding.recipeServingsTextView.text = "${recipe.servings}"
             binding.recipeCookingTimeTextView.text = "${recipe.cookingTime} min"
-            binding.recipeUserNameTextView.text = "by ${recipe.userName}"
+//            binding.recipeUserNameTextView.text = "by ${recipe.userName}"
+
+            // Hide bookmark icon for MyRecipesAdapter
+            binding.bookmarkIcon.visibility = View.GONE
 
             // Load image using Glide
             Glide.with(context)

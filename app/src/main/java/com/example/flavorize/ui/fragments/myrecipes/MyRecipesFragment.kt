@@ -94,6 +94,17 @@ class MyRecipesFragment : Fragment() {
         builder.show()
     }
 
+    fun performSearch(query: String?) {
+        query?.let {
+            viewModel.myRecipes.value?.let { recipes ->
+                val filteredRecipes = recipes.filter { recipe ->
+                    recipe.name.contains(query, ignoreCase = true) || recipe.description.contains(query, ignoreCase = true)
+                }
+                myRecipesAdapter.updateRecipes(filteredRecipes)
+            }
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
