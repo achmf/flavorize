@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Flavorize">
         <activity
-            android:name=".BookmarkedRecipesActivity"
+            android:name=".ui.activities.bookmark.BookmarkedRecipesActivity"
             android:exported="false" />
         <activity
             android:name=".ui.activities.editrecipe.EditRecipeActivity"
@@ -25,7 +25,7 @@
             android:name=".ui.activities.profile.ProfileActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.activities.createform.draft.DraftListActivity"
+            android:name=".ui.activities.createform.draft.DraftedRecipesActivity"
             android:exported="false" />
         <activity
             android:name=".ui.auth.LoginActivity"

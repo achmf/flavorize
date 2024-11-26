@@ -57,6 +57,14 @@ class HomeFragment : Fragment() {
         }
     }
 
+    fun resetSearch() {
+        // Reset the RecyclerView to show the full list of content
+        homeViewModel.content.value?.let { content ->
+            homeAdapter.updateContent(content)
+        }
+    }
+
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

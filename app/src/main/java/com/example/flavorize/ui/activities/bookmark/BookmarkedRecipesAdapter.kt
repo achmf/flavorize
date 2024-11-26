@@ -1,4 +1,4 @@
-package com.example.flavorize
+package com.example.flavorize.ui.activities.bookmark
 
 import android.content.Context
 import android.content.Intent
@@ -6,12 +6,14 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.flavorize.R
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.ItemRecipeCardBinding
 import com.example.flavorize.ui.activities.recipedetail.RecipeDetailActivity
 
 class BookmarkedRecipesAdapter(
-    private var bookmarkedRecipes: MutableList<Recipe>
+    private var bookmarkedRecipes: MutableList<Recipe>,
+    private val onBookmarkToggle: (Recipe) -> Unit
 ) : RecyclerView.Adapter<BookmarkedRecipesAdapter.BookmarkedRecipeViewHolder>() {
 
     inner class BookmarkedRecipeViewHolder(private val binding: ItemRecipeCardBinding) :
@@ -28,10 +30,13 @@ class BookmarkedRecipesAdapter(
                 .load(recipe.imageUrl)
                 .into(binding.recipeImageView)
 
-            // Disable the bookmark icon click in this activity
-            binding.bookmarkIcon.setImageResource(
-                if (recipe.isBookmarked) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark_border
-            )
+            // Always display the bookmark icon as filled
+            binding.bookmarkIcon.setImageResource(R.drawable.ic_bookmark_filled)
+
+            // Handle unbookmarking on icon click
+            binding.bookmarkIcon.setOnClickListener {
+                onBookmarkToggle(recipe)
+            }
 
             // Open recipe details on card click
             binding.root.setOnClickListener {
@@ -61,5 +66,13 @@ class BookmarkedRecipesAdapter(
         bookmarkedRecipes.clear()
         bookmarkedRecipes.addAll(newRecipes)
         notifyDataSetChanged()
+    }
+
+    fun removeRecipe(recipe: Recipe) {
+        val index = bookmarkedRecipes.indexOfFirst { it.id == recipe.id }
+        if (index != -1) {
+            bookmarkedRecipes.removeAt(index)
+            notifyItemRemoved(index)
+        }
     }
 }

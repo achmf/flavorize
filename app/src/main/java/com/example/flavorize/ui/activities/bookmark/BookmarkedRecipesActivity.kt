@@ -1,10 +1,11 @@
-package com.example.flavorize
+package com.example.flavorize.ui.activities.bookmark
 
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.data.FirestoreRepository
+import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.ActivityBookmarkedRecipesBinding
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -24,12 +25,26 @@ class BookmarkedRecipesActivity : AppCompatActivity() {
         binding = ActivityBookmarkedRecipesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupToolbar()
         setupRecyclerView()
         fetchBookmarkedRecipes()
     }
 
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        binding.toolbar.setNavigationOnClickListener {
+            onBackPressed() // Handle back button click
+        }
+    }
+
     private fun setupRecyclerView() {
-        bookmarkedRecipesAdapter = BookmarkedRecipesAdapter(mutableListOf())
+        bookmarkedRecipesAdapter = BookmarkedRecipesAdapter(
+            mutableListOf(),
+            onBookmarkToggle = { recipe ->
+                unbookmarkRecipe(recipe)
+            }
+        )
         binding.bookmarkedRecipesRecyclerView.layoutManager = GridLayoutManager(this, 2)
         binding.bookmarkedRecipesRecyclerView.adapter = bookmarkedRecipesAdapter
     }
@@ -57,4 +72,20 @@ class BookmarkedRecipesActivity : AppCompatActivity() {
         }
     }
 
+    private fun unbookmarkRecipe(recipe: Recipe) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) { firestoreRepository.removeBookmark(userId, recipe.id) }
+            if (result.isSuccess) {
+                // Remove the unbookmarked recipe from the list
+                bookmarkedRecipesAdapter.removeRecipe(recipe)
+                Toast.makeText(this@BookmarkedRecipesActivity, "Bookmark removed!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(
+                    this@BookmarkedRecipesActivity,
+                    "Failed to remove bookmark: ${result.exceptionOrNull()?.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 }
