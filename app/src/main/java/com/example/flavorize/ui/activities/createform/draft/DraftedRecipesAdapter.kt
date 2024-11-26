@@ -8,8 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.flavorize.R
 import com.example.flavorize.data.recipedraft.DraftRecipe
 
-class DraftListAdapter(private val drafts: List<DraftRecipe>) :
-    RecyclerView.Adapter<DraftListAdapter.DraftViewHolder>() {
+class DraftedRecipesAdapter(private val drafts: List<DraftRecipe>) :
+    RecyclerView.Adapter<DraftedRecipesAdapter.DraftViewHolder>() {
 
     class DraftViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val nameTextView: TextView = view.findViewById(R.id.draftNameTextView)

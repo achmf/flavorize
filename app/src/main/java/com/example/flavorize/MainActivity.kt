@@ -18,10 +18,13 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
+import androidx.navigation.ui.onNavDestinationSelected
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
 import com.example.flavorize.databinding.ActivityMainBinding
+import com.example.flavorize.ui.activities.bookmark.BookmarkedRecipesActivity
+import com.example.flavorize.ui.activities.createform.draft.DraftedRecipesActivity
 import com.example.flavorize.ui.auth.LoginActivity
 import com.example.flavorize.ui.activities.profile.ProfileActivity
 import com.example.flavorize.ui.fragments.home.HomeFragment
@@ -138,7 +141,17 @@ class MainActivity : AppCompatActivity() {
                     binding.drawerLayout.closeDrawers()
                     true
                 }
-                else -> false
+                R.id.navigation_drafted -> {
+                    val intent = Intent(this, DraftedRecipesActivity::class.java)
+                    startActivity(intent)
+                    binding.drawerLayout.closeDrawers()
+                    true
+                }
+                else -> {
+                    menuItem.onNavDestinationSelected(navController) // Handle other navigation
+                    binding.drawerLayout.closeDrawers()
+                    true
+                }
             }
         }
     }
@@ -256,18 +269,30 @@ class MainActivity : AppCompatActivity() {
         searchView.setQuery("", false) // Clear input text
         searchView.clearFocus() // Remove focus from SearchView
 
+        // Reset search results to their original state
+        val currentFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
+        when (currentFragment) {
+            is RecipesFragment -> currentFragment.resetSearch() // Call resetSearch on RecipesFragment
+            is MyRecipesFragment -> currentFragment.resetSearch() // Call resetSearch on MyRecipesFragment
+            is HomeFragment -> currentFragment.resetSearch() // Call resetSearch on HomeFragment
+        }
+
         // Hide keyboard
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(searchView.windowToken, 0)
     }
 
+
     override fun onBackPressed() {
         if (viewModel.isSearchBarVisible.value == true) {
+            closeSearchBar() // Close search bar and reset search results
             viewModel.hideSearchBar()
         } else {
             super.onBackPressed()
         }
     }
+
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()

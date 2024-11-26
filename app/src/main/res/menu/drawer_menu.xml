@@ -4,4 +4,8 @@
         android:id="@+id/navigation_bookmarked"
         android:icon="@drawable/ic_bookmark_filled"
         android:title="Bookmarked Recipes" />
+    <item
+        android:id="@+id/navigation_drafted"
+        android:icon="@drawable/ic_draft"
+        android:title="Drafted Recipes" />
 </menu>

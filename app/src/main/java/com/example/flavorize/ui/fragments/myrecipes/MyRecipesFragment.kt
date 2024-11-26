@@ -38,6 +38,11 @@ class MyRecipesFragment : Fragment() {
         viewModel.fetchMyRecipes()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.fetchMyRecipes() // Refresh data when fragment becomes visible again
+    }
+
     private fun setupRecyclerView() {
         val gridLayoutManager = GridLayoutManager(requireContext(), 2)
         myRecipesAdapter = MyRecipesAdapter(
@@ -104,6 +109,14 @@ class MyRecipesFragment : Fragment() {
             }
         }
     }
+
+    fun resetSearch() {
+        // Reset the RecyclerView to show the full list of recipes
+        viewModel.myRecipes.value?.let { recipes ->
+            myRecipesAdapter.updateRecipes(recipes)
+        }
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

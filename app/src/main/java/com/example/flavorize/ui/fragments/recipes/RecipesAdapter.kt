@@ -12,7 +12,7 @@ import com.example.flavorize.databinding.ItemRecipeCardBinding
 import com.example.flavorize.ui.activities.recipedetail.RecipeDetailActivity
 
 class RecipesAdapter(
-    private var allRecipes: MutableList<Recipe>, // Use MutableList for easier updates
+    private var allRecipes: MutableList<Recipe>,
     private val userId: String,
     private val onBookmarkToggle: (Recipe, Boolean) -> Unit
 ) : RecyclerView.Adapter<RecipesAdapter.RecipeViewHolder>() {

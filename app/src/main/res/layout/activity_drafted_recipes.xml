@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.activities.bookmark.BookmarkedRecipesActivity">
+    tools:context=".ui.activities.createform.draft.DraftedRecipesActivity">
 
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
@@ -12,7 +13,7 @@
         android:layout_width="0dp"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/white"
-        app:title="Bookmarked Recipes"
+        app:title="Drafted Recipes"
         app:titleTextColor="@color/black"
         app:navigationIcon="@drawable/ic_back_arrow"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
@@ -20,17 +21,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- RecyclerView for Bookmarked Recipes -->
+    <!-- RecyclerView for Drafted Recipes -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/bookmarkedRecipesRecyclerView"
+        android:id="@+id/draftRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:padding="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        tools:listitem="@layout/item_recipe_card" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

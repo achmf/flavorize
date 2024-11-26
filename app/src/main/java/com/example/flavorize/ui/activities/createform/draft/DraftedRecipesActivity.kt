@@ -6,21 +6,30 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.flavorize.data.recipedraft.DraftRecipeDatabase
-import com.example.flavorize.databinding.ActivityDraftListBinding
+import com.example.flavorize.databinding.ActivityDraftedRecipesBinding
 import kotlinx.coroutines.launch
 
-class DraftListActivity : AppCompatActivity() {
+class DraftedRecipesActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityDraftListBinding
+    private lateinit var binding: ActivityDraftedRecipesBinding
     private val draftDao by lazy { DraftRecipeDatabase.getDatabase(this).draftRecipeDao() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityDraftListBinding.inflate(layoutInflater)
+        binding = ActivityDraftedRecipesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupToolbar()
         setupUI()
         loadDrafts()
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        binding.toolbar.setNavigationOnClickListener {
+            onBackPressed() // Handle back button click
+        }
     }
 
     private fun setupUI() {
@@ -32,7 +41,7 @@ class DraftListActivity : AppCompatActivity() {
             val drafts = draftDao.getAllDrafts()
             Log.d("DraftListActivity", "Drafts: $drafts")
             // Tampilkan di RecyclerView
-            binding.draftRecyclerView.adapter = DraftListAdapter(drafts)
+            binding.draftRecyclerView.adapter = DraftedRecipesAdapter(drafts)
         }
     }
 }
