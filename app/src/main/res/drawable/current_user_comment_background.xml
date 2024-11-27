@@ -1,0 +1,7 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#E0F7FA" /> <!-- Background color for the current user's comment -->
+    <corners android:radius="8dp" /> <!-- Rounded corners -->
+    <stroke
+        android:width="2dp"
+        android:color="#0097A7" /> <!-- Border color for emphasis -->
+</shape>
