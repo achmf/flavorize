@@ -6,4 +6,11 @@
     </style>
 
     <style name="Theme.Flavorize" parent="Base.Theme.Flavorize" />
+
+    <style name="RoundedBottomCornersOnly" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+        <item name="cornerSizeTopLeft">0dp</item>
+        <item name="cornerSizeTopRight">0dp</item>
+    </style>
 </resources>

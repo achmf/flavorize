@@ -1,5 +1,6 @@
 package com.example.flavorize.data
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -12,6 +13,7 @@ class FirestoreRepository {
     private val bookmarksCollection = firestore.collection("bookmarks")
     private val recipesCollection = firestore.collection("recipes")
     private val usersCollection = firestore.collection("users")
+    private val commentsCollection = firestore.collection("comments") // Koleksi "comments"
     val auth = FirebaseAuth.getInstance()
 
     // Function to add a new recipe to Firestore
@@ -66,7 +68,7 @@ class FirestoreRepository {
     }
 
     // Function to get a user's name by ID
-    suspend fun getUserNameById(userId: String): String {
+    private suspend fun getUserNameById(userId: String): String {
         return try {
             val userDocument = usersCollection.document(userId).get().await()
             userDocument.getString("name") ?: "Unknown User"
@@ -123,28 +125,6 @@ class FirestoreRepository {
         }
     }
 
-    // Function to get all bookmarked recipes for a user
-    suspend fun getBookmarkedRecipes(userId: String): Result<List<Recipe>> {
-        return try {
-            val document = bookmarksCollection.document(userId).get().await()
-            val bookmarkedRecipeIds = document.get("bookmarkedRecipes") as? List<String> ?: emptyList()
-            val recipes = recipesCollection.whereIn("id", bookmarkedRecipeIds).get().await().toObjects(Recipe::class.java)
-            Result.success(recipes)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // Function to get all recipes created by a specific user
-    suspend fun getAllRecipesForUser(userId: String): Result<List<Recipe>> {
-        return try {
-            val snapshot = recipesCollection.whereEqualTo("userId", userId).get().await()
-            val recipes = snapshot.toObjects(Recipe::class.java)
-            Result.success(recipes)
-        } catch (e: FirebaseFirestoreException) {
-            Result.failure(e)
-        }
-    }
 
     // New function to check bookmarked status
     suspend fun fetchRecipesWithBookmarkStatus(userId: String): Result<List<Recipe>> {
@@ -169,5 +149,69 @@ class FirestoreRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun getCommentsForRecipe(recipeId: String): Result<List<RecipeComment>> {
+        return try {
+            val snapshot = commentsCollection.whereEqualTo("recipeId", recipeId).get().await()
+            val comments = snapshot.toObjects(RecipeComment::class.java)
+            Result.success(comments)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Menambahkan komentar ke koleksi `comments`
+    suspend fun addCommentToRecipe(recipeId: String, comment: RecipeComment): Result<Void?> {
+        return try {
+            val commentWithRecipeId = comment.copy(recipeId = recipeId) // Tambahkan recipeId ke komentar
+            commentsCollection.document().set(commentWithRecipeId).await()
+            Result.success(null)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepository", "Error adding comment: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateComment(comment: RecipeComment): Result<Void?> {
+        return try {
+            val doc = commentsCollection.whereEqualTo("recipeId", comment.recipeId)
+                .whereEqualTo("userId", comment.userId)
+                .limit(1)
+                .get()
+                .await()
+                .documents.firstOrNull()
+
+            doc?.reference?.update("text", comment.text)?.await()
+            Result.success(null)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteComment(comment: RecipeComment): Result<Void?> {
+        return try {
+            val doc = commentsCollection.whereEqualTo("recipeId", comment.recipeId)
+                .whereEqualTo("userId", comment.userId)
+                .limit(1)
+                .get()
+                .await()
+                .documents.firstOrNull()
+
+            doc?.reference?.delete()?.await()
+            Result.success(null)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Mendapatkan userId saat ini
+    fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
+    }
+
+    // Mendapatkan nama user saat ini
+    fun getCurrentUserName(): String {
+        return auth.currentUser?.displayName ?: "Anonymous"
     }
 }
