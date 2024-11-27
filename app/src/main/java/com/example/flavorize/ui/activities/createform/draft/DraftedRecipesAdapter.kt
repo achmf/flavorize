@@ -8,8 +8,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.flavorize.R
 import com.example.flavorize.data.recipedraft.DraftRecipe
 
-class DraftedRecipesAdapter(private val drafts: List<DraftRecipe>) :
-    RecyclerView.Adapter<DraftedRecipesAdapter.DraftViewHolder>() {
+class DraftedRecipesAdapter(
+    private val drafts: List<DraftRecipe>,
+    private val onClick: (DraftRecipe) -> Unit
+) : RecyclerView.Adapter<DraftedRecipesAdapter.DraftViewHolder>() {
 
     class DraftViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val nameTextView: TextView = view.findViewById(R.id.draftNameTextView)
@@ -26,6 +28,10 @@ class DraftedRecipesAdapter(private val drafts: List<DraftRecipe>) :
         val draft = drafts[position]
         holder.nameTextView.text = draft.name
         holder.descriptionTextView.text = draft.description
+
+        holder.itemView.setOnClickListener {
+            onClick(draft) // Kirim data draft ke activity
+        }
     }
 
     override fun getItemCount(): Int = drafts.size
