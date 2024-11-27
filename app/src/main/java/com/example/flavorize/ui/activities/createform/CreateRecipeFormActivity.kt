@@ -2,6 +2,7 @@ package com.example.flavorize.ui.activities.createform
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,8 +19,11 @@ import com.example.flavorize.data.Recipe
 import com.example.flavorize.data.SupabaseStorageRepository
 import com.example.flavorize.databinding.ActivityCreateRecipeFormBinding
 import com.example.flavorize.ui.activities.createform.viewmodel.CreateRecipeViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.UUID
 
@@ -41,6 +45,10 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         setupToolbar()
         setupUI()
         observeViewModel()
+
+        // Ambil data draft dari intent
+        val draft = intent.getParcelableExtra<DraftRecipe>("draft")
+        draft?.let { populateFormWithDraft(it) }
     }
 
     private fun setupToolbar() {
@@ -134,16 +142,41 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     }
 
     private fun handleSaveDraft() {
-        val recipe = getCurrentDraftRecipe()
-        if (recipe != null) {
+        // Ambil draft awal
+        val originalRecipe = getCurrentDraftRecipe()
+        val userId = FirebaseAuth.getInstance().currentUser?.uid // Ambil userId
+
+        if (originalRecipe != null && userId != null) { // Tambahkan validasi userId
+            // Simpan URI gambar ke cache (jika ada gambar)
+            val cachedImageUri = imageUri?.let { uri -> saveImageToCache(uri) }
+
+            // Buat salinan draft dengan userId dan URI gambar baru
+            val updatedRecipe = originalRecipe.copy(userId = userId, imageUri = cachedImageUri)
+
             lifecycleScope.launch {
-                draftDao.insertDraft(recipe)
-                Toast.makeText(this@CreateRecipeFormActivity, "com.example.flavorize.data.Recipe saved as draft", Toast.LENGTH_SHORT).show()
+                // Simpan draft yang diperbarui ke database
+                draftDao.insertDraft(updatedRecipe)
+                Toast.makeText(this@CreateRecipeFormActivity, "Recipe saved as draft", Toast.LENGTH_SHORT).show()
                 finish()
             }
         } else {
-            isDraftClicked = false // Reset state if validation fails
-            Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
+            isDraftClicked = false // Reset state jika validasi gagal
+            Toast.makeText(this, "Please complete all fields or login", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun saveImageToCache(uri: Uri): String? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val file = File(cacheDir, "${UUID.randomUUID()}.jpg")
+            val outputStream = FileOutputStream(file)
+            inputStream?.copyTo(outputStream)
+            inputStream?.close()
+            outputStream.close()
+            file.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 
@@ -230,6 +263,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val description = binding.recipeDescriptionEditText.text.toString()
         val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
         val cookingTime = binding.recipeCookingTimeEditText.text.toString().toIntOrNull() ?: 0
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return null
 
         val ingredients = mutableListOf<String>()
         for (i in 0 until binding.recipeIngredientsLayout.childCount) {
@@ -255,6 +289,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
 
         return if (name.isNotBlank() && description.isNotBlank()) {
             DraftRecipe(
+                userId = userId, // Tambahkan userId
                 name = name,
                 description = description,
                 servings = servings,
@@ -264,6 +299,45 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                 imageUri = imageUri?.toString()
             )
         } else null
+    }
+
+    // Metode untuk mengisi form
+    private fun populateFormWithDraft(draft: DraftRecipe) {
+        binding.recipeNameEditText.setText(draft.name)
+        binding.recipeDescriptionEditText.setText(draft.description)
+        binding.recipePortionsEditText.setText(draft.servings.toString())
+        binding.recipeCookingTimeEditText.setText(draft.cookingTime.toString())
+
+        draft.ingredients.forEach { ingredient ->
+            val ingredientEditText = EditText(this).apply {
+                setText(ingredient)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+            binding.recipeIngredientsLayout.addView(ingredientEditText)
+        }
+
+        draft.instructions.forEach { instruction ->
+            val instructionEditText = EditText(this).apply {
+                setText(instruction)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+            binding.recipeInstructionsLayout.addView(instructionEditText)
+        }
+
+        draft.imageUri?.let { uri ->
+            val cachedUri = saveImageToCache(Uri.parse(uri))
+            cachedUri?.let {
+                val drawable = Drawable.createFromPath(it)
+                binding.recipeImageView.setImageDrawable(drawable)
+                imageUri = Uri.parse(it)
+            }
+        }
     }
 
     override fun onDestroy() {

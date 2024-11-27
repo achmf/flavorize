@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [DraftRecipe::class], version = 1, exportSchema = false)
-@TypeConverters(Converters::class) // Tambahkan konverter di sini
+@Database(entities = [DraftRecipe::class], version = 2, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class DraftRecipeDatabase : RoomDatabase() {
     abstract fun draftRecipeDao(): DraftRecipeDao
 
@@ -21,10 +21,13 @@ abstract class DraftRecipeDatabase : RoomDatabase() {
                     context.applicationContext,
                     DraftRecipeDatabase::class.java,
                     "draft_recipe_database"
-                ).fallbackToDestructiveMigration().build()
+                )
+                    .fallbackToDestructiveMigration() // Hapus data lama jika tidak ada migrasi
+                    .build()
                 INSTANCE = instance
                 instance
             }
         }
     }
 }
+
