@@ -65,11 +65,6 @@ class MyRecipesFragment : Fragment() {
             binding.swipeRefreshLayout.isRefreshing = false // Stop refreshing animation
         }
 
-        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            // Show/hide ProgressBar based on loading state
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        }
-
         viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             errorMessage?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()

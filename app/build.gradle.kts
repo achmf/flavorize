@@ -7,17 +7,26 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("E:\\Kuliah Farizi\\Flavorize\\App\\release_keystore.jks")
+            storePassword = "14122004why"
+            keyAlias = "key0"
+            keyPassword = "14122004why"
+        }
+    }
     namespace = "com.example.flavorize"
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.flavorize"
-        minSdk = 34
-        targetSdk = 35
+        minSdk = 28
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig = signingConfigs.getByName("release")
     }
 
     buildTypes {
@@ -47,6 +56,9 @@ dependencies {
     // Glide
     implementation (libs.glide)
 
+    // Paging 3
+    implementation(libs.androidx.paging.runtime.ktx)
+    implementation("androidx.paging:paging-common-ktx:3.3.4")
 
     // Supabase Storage
     implementation ("io.github.jan-tennert.supabase:postgrest-kt:3.0.2")

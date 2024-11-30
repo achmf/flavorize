@@ -4,9 +4,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.example.flavorize.data.FirestoreRepository
 import com.example.flavorize.data.Recipe
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class RecipesFragmentViewModel : ViewModel() {
@@ -15,25 +18,25 @@ class RecipesFragmentViewModel : ViewModel() {
     private val _recipes = MutableLiveData<List<Recipe>>()
     val recipes: LiveData<List<Recipe>> get() = _recipes
 
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> get() = _isLoading
-
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
 
-    fun fetchRecipesWithBookmarks() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        _isLoading.value = true
-        viewModelScope.launch {
-            val result = firestoreRepository.fetchRecipesWithBookmarkStatus(userId)
-            if (result.isSuccess) {
-                _recipes.value = result.getOrDefault(emptyList())
-                _isLoading.value = false
-            } else {
-                _errorMessage.value = result.exceptionOrNull()?.message
-                _isLoading.value = false
-            }
-        }
+    private val _bookmarkChanges = MutableLiveData<Boolean>()
+    val bookmarkChanges: LiveData<Boolean> get() = _bookmarkChanges
+
+    var shouldRefreshOnResume = false // Control refresh on resume
+
+    fun notifyBookmarkChange() {
+        shouldRefreshOnResume = true
+        _bookmarkChanges.value = true
+    }
+
+    fun resetBookmarkChangeFlag() {
+        shouldRefreshOnResume = false
+    }
+
+    fun getPagedRecipes(): Flow<PagingData<Recipe>> {
+        return firestoreRepository.getPagedRecipes().cachedIn(viewModelScope)
     }
 
     fun toggleBookmark(

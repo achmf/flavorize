@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.data.FirestoreRepository
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.ActivityBookmarkedRecipesBinding
+import com.example.flavorize.ui.fragments.recipes.viewmodel.RecipesFragmentViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,9 +77,11 @@ class BookmarkedRecipesActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             val result = withContext(Dispatchers.IO) { firestoreRepository.removeBookmark(userId, recipe.id) }
             if (result.isSuccess) {
-                // Remove the unbookmarked recipe from the list
                 bookmarkedRecipesAdapter.removeRecipe(recipe)
                 Toast.makeText(this@BookmarkedRecipesActivity, "Bookmark removed!", Toast.LENGTH_SHORT).show()
+
+                // Notify the ViewModel about the bookmark change
+                RecipesFragmentViewModel().notifyBookmarkChange()
             } else {
                 Toast.makeText(
                     this@BookmarkedRecipesActivity,

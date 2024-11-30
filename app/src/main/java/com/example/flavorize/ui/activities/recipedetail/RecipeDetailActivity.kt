@@ -64,9 +64,10 @@ class RecipeDetailActivity : AppCompatActivity() {
     private fun bindRecipeDetails(recipe: Recipe) {
         binding.recipeNameTextView.text = recipe.name
         binding.recipeDescriptionTextView.text = recipe.description
-        binding.recipeServingsTextView.text = getString(R.string.servings_text, recipe.servings)
-        binding.recipeCookingTimeTextView.text = getString(R.string.cooking_time_text, recipe.cookingTime)
-        binding.recipeUserNameTextView.text = getString(R.string.created_by_text, recipe.userName)
+        binding.recipeServingsTextView.text = getString(R.string.recipe_servings, recipe.servings)
+        binding.recipeCookingTimeTextView.text = getString(R.string.recipe_cooking_time, recipe.cookingTime)
+        binding.recipeUserNameTextView.text = getString(R.string.recipe_created_by, recipe.userName)
+
 
         // Format ingredients as numbered list
         val formattedIngredients = recipe.ingredients.mapIndexed { index, ingredient ->
