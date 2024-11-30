@@ -1,10 +1,15 @@
 package com.example.flavorize.data
 
 import android.util.Log
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import com.example.flavorize.ui.fragments.recipes.paging.RecipesPagingSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
@@ -213,5 +218,15 @@ class FirestoreRepository {
     // Mendapatkan nama user saat ini
     fun getCurrentUserName(): String {
         return auth.currentUser?.displayName ?: "Anonymous"
+    }
+
+    fun getPagedRecipes(): Flow<PagingData<Recipe>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 10, // Sesuaikan ukuran halaman
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { RecipesPagingSource(firestore) }
+        ).flow
     }
 }

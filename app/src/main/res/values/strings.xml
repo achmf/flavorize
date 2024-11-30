@@ -13,7 +13,8 @@
     <string name="my_recipes">My Recipes</string>
 
     <!-- Recipes -->
-    <string name="servings_text">%d servings</string>
-    <string name="cooking_time_text">%s minutes</string>
-    <string name="created_by_text">Created by %s</string>
+    <string name="recipe_servings">Servings: %1$d</string>
+    <string name="recipe_cooking_time">Cooking Time: %1$s min</string>
+    <string name="recipe_created_by">by %1$s</string>
+    <string name="recipe_cooking_time_min">%1$s min</string>
 </resources>
