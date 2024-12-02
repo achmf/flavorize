@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
 import com.example.flavorize.MainActivity
 import com.example.flavorize.R
 import com.example.flavorize.databinding.ActivityLoginBinding
@@ -33,7 +32,7 @@ class LoginActivity : AppCompatActivity() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
-            .requestProfile() // Meminta akses ke profil dasar
+            .requestProfile()
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
@@ -43,7 +42,7 @@ class LoginActivity : AppCompatActivity() {
             signIn()
         }
 
-        viewModel.isSignInSuccessful.observe(this, Observer { isSuccessful ->
+        viewModel.isSignInSuccessful.observe(this) { isSuccessful ->
             if (isSuccessful) {
                 // Save user information to Firestore
                 auth.currentUser?.let { user ->
@@ -52,14 +51,14 @@ class LoginActivity : AppCompatActivity() {
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             }
-        })
+        }
 
-        viewModel.errorMessage.observe(this, Observer { message ->
+        viewModel.errorMessage.observe(this) { message ->
             message?.let {
                 // Show error message to the user
                 android.util.Log.e("LoginActivity", it)
             }
-        })
+        }
     }
 
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->

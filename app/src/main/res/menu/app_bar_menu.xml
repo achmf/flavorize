@@ -8,11 +8,4 @@
         android:icon="@drawable/ic_search"
         android:title="Search"
         app:showAsAction="ifRoom" />
-
-    <!-- More Options Icon -->
-    <item
-        android:id="@+id/action_more"
-        android:icon="@drawable/ic_more_vert"
-        android:title="More"
-        app:showAsAction="ifRoom" />
 </menu>

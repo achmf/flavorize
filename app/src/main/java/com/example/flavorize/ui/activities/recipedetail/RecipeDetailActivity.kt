@@ -62,26 +62,26 @@ class RecipeDetailActivity : AppCompatActivity() {
     }
 
     private fun bindRecipeDetails(recipe: Recipe) {
+        lifecycleScope.launch {
+            val userName = FirestoreRepository().getUserNameById(recipe.userId) // Ambil nama user
+            binding.recipeUserNameTextView.text = getString(R.string.recipe_created_by, userName)
+        }
+
         binding.recipeNameTextView.text = recipe.name
         binding.recipeDescriptionTextView.text = recipe.description
         binding.recipeServingsTextView.text = getString(R.string.recipe_servings, recipe.servings)
         binding.recipeCookingTimeTextView.text = getString(R.string.recipe_cooking_time, recipe.cookingTime)
-        binding.recipeUserNameTextView.text = getString(R.string.recipe_created_by, recipe.userName)
 
-
-        // Format ingredients as numbered list
         val formattedIngredients = recipe.ingredients.mapIndexed { index, ingredient ->
             "${index + 1}. $ingredient"
         }.joinToString("\n\n")
         binding.ingredientsTextView.text = formattedIngredients
 
-        // Format steps as numbered list
         val formattedSteps = recipe.instructions.mapIndexed { index, step ->
             "${index + 1}. $step"
         }.joinToString("\n\n")
         binding.instructionsTextView.text = formattedSteps
 
-        // Load image using Glide
         Glide.with(this)
             .load(recipe.imageUrl)
             .into(binding.recipeImageView)

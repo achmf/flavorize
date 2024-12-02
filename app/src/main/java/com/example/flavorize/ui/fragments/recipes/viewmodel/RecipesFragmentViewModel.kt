@@ -8,31 +8,22 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.example.flavorize.data.FirestoreRepository
 import com.example.flavorize.data.Recipe
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class RecipesFragmentViewModel : ViewModel() {
     private val firestoreRepository = FirestoreRepository()
 
-    private val _recipes = MutableLiveData<List<Recipe>>()
-    val recipes: LiveData<List<Recipe>> get() = _recipes
-
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
 
-    private val _bookmarkChanges = MutableLiveData<Boolean>()
-    val bookmarkChanges: LiveData<Boolean> get() = _bookmarkChanges
+    private val _bookmarkUpdates = MutableLiveData<Set<String>>()
+    val bookmarkUpdates: LiveData<Set<String>> get() = _bookmarkUpdates
 
-    var shouldRefreshOnResume = false // Control refresh on resume
 
     fun notifyBookmarkChange() {
-        shouldRefreshOnResume = true
-        _bookmarkChanges.value = true
-    }
-
-    fun resetBookmarkChangeFlag() {
-        shouldRefreshOnResume = false
+        val userId = firestoreRepository.getCurrentUserId() ?: return
+        startListeningForBookmarkChanges(userId)
     }
 
     fun getPagedRecipes(): Flow<PagingData<Recipe>> {
@@ -45,7 +36,7 @@ class RecipesFragmentViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userId = firestoreRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
             val result = if (isBookmarking) {
                 firestoreRepository.addBookmark(userId, recipe.id)
@@ -54,9 +45,22 @@ class RecipesFragmentViewModel : ViewModel() {
             }
             if (result.isSuccess) {
                 onSuccess()
+                // Update the recipe's local state
+                recipe.isBookmarked = isBookmarking
             } else {
+                _errorMessage.postValue(result.exceptionOrNull()?.message ?: "An error occurred")
                 onError(result.exceptionOrNull()?.message ?: "An error occurred")
             }
         }
+    }
+
+    fun startListeningForBookmarkChanges(userId: String) {
+        firestoreRepository.listenForBookmarkChanges(userId) { updatedBookmarks ->
+            _bookmarkUpdates.postValue(updatedBookmarks)
+        }
+    }
+
+    fun stopListeningForBookmarkChanges() {
+        firestoreRepository.stopListeningForBookmarkChanges()
     }
 }

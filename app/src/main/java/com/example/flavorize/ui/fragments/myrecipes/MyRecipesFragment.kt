@@ -1,5 +1,6 @@
 package com.example.flavorize.ui.fragments.myrecipes
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,17 +9,25 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.paging.filter
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.flavorize.data.FirestoreRepository
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.FragmentMyRecipesBinding
+import com.example.flavorize.ui.activities.editrecipe.EditRecipeActivity
+import com.example.flavorize.ui.fragments.myrecipes.paging.MyRecipesPagingAdapter
 import com.example.flavorize.ui.fragments.myrecipes.viewmodel.MyRecipesFragmentViewModel
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MyRecipesFragment : Fragment() {
     private var _binding: FragmentMyRecipesBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: MyRecipesFragmentViewModel by viewModels()
-    private lateinit var myRecipesAdapter: MyRecipesAdapter
+    private lateinit var myRecipesPagingAdapter: MyRecipesPagingAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,85 +42,99 @@ class MyRecipesFragment : Fragment() {
 
         setupRecyclerView()
         setupSwipeToRefresh()
-        observeViewModel()
-
-        viewModel.fetchMyRecipes()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.fetchMyRecipes() // Refresh data when fragment becomes visible again
+        loadUserRecipes()
     }
 
     private fun setupRecyclerView() {
-        val gridLayoutManager = GridLayoutManager(requireContext(), 2)
-        myRecipesAdapter = MyRecipesAdapter(
-            allRecipes = listOf(),
-            onDelete = { recipe -> handleDeleteRecipe(recipe) }
+        myRecipesPagingAdapter = MyRecipesPagingAdapter(
+            onEditRecipe = { navigateToEditRecipe(it) },
+            onDeleteRecipe = { confirmDeleteRecipe(it) }
         )
-        binding.myRecipesRecyclerView.layoutManager = gridLayoutManager
-        binding.myRecipesRecyclerView.adapter = myRecipesAdapter
+        binding.myRecipesRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.myRecipesRecyclerView.adapter = myRecipesPagingAdapter
     }
 
     private fun setupSwipeToRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            viewModel.refreshMyRecipes()
+            myRecipesPagingAdapter.refresh()
+            binding.swipeRefreshLayout.isRefreshing = false
         }
     }
 
-    private fun observeViewModel() {
-        viewModel.myRecipes.observe(viewLifecycleOwner) { recipes ->
-            myRecipesAdapter.updateRecipes(recipes)
-            binding.swipeRefreshLayout.isRefreshing = false // Stop refreshing animation
-        }
-
-        viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
-            errorMessage?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                binding.swipeRefreshLayout.isRefreshing = false // Stop refreshing animation
-            }
-        }
-    }
-
-    private fun handleDeleteRecipe(recipe: Recipe) {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Delete Recipe")
-        builder.setMessage("Are you sure you want to delete the recipe \"${recipe.name}\"?")
-        builder.setPositiveButton("Yes") { _, _ ->
-            viewModel.deleteRecipe(
-                recipeId = recipe.id,
-                onSuccess = {
-                    Toast.makeText(requireContext(), "Recipe deleted successfully", Toast.LENGTH_SHORT).show()
-                },
-                onError = { errorMessage ->
-                    Toast.makeText(requireContext(), "Error: $errorMessage", Toast.LENGTH_SHORT).show()
+    private fun loadUserRecipes() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId != null) {
+            lifecycleScope.launch {
+                viewModel.getPagedMyRecipes(userId).collectLatest { pagingData ->
+                    myRecipesPagingAdapter.submitData(pagingData)
                 }
-            )
+            }
+        } else {
+            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
         }
-        builder.setNegativeButton("No") { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.show()
     }
 
     fun performSearch(query: String?) {
-        query?.let {
-            viewModel.myRecipes.value?.let { recipes ->
-                val filteredRecipes = recipes.filter { recipe ->
-                    recipe.name.contains(query, ignoreCase = true) || recipe.description.contains(query, ignoreCase = true)
+        query?.let { searchText ->
+            val userId = viewModel.firestoreRepository.getCurrentUserId()
+            if (userId != null) {
+                lifecycleScope.launch {
+                    viewModel.getPagedMyRecipes(userId).collectLatest { pagingData ->
+                        val filteredData = pagingData.filter { recipe ->
+                            recipe.name.contains(searchText, ignoreCase = true) ||
+                                    recipe.description.contains(searchText, ignoreCase = true)
+                        }
+                        myRecipesPagingAdapter.submitData(filteredData)
+                    }
                 }
-                myRecipesAdapter.updateRecipes(filteredRecipes)
+            } else {
+                Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     fun resetSearch() {
-        // Reset the RecyclerView to show the full list of recipes
-        viewModel.myRecipes.value?.let { recipes ->
-            myRecipesAdapter.updateRecipes(recipes)
+        val userId = viewModel.firestoreRepository.getCurrentUserId()
+        if (userId != null) {
+            lifecycleScope.launch {
+                viewModel.getPagedMyRecipes(userId).collectLatest { pagingData ->
+                    myRecipesPagingAdapter.submitData(pagingData)
+                }
+            }
+        } else {
+            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
         }
     }
 
+    private fun navigateToEditRecipe(recipe: Recipe) {
+        val intent = Intent(requireContext(), EditRecipeActivity::class.java).apply {
+            putExtra("recipe", recipe)
+        }
+        startActivity(intent)
+    }
+
+    private fun confirmDeleteRecipe(recipe: Recipe) {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Delete Recipe")
+            .setMessage("Are you sure you want to delete this recipe?")
+            .setPositiveButton("Yes") { _, _ -> deleteRecipe(recipe) }
+            .setNegativeButton("No", null)
+            .create()
+        dialog.show()
+    }
+
+    private fun deleteRecipe(recipe: Recipe) {
+        val firestoreRepository = FirestoreRepository()
+        lifecycleScope.launch {
+            val result = firestoreRepository.deleteRecipe(recipe.id)
+            if (result.isSuccess) {
+                Toast.makeText(requireContext(), "Recipe deleted successfully", Toast.LENGTH_SHORT).show()
+                myRecipesPagingAdapter.refresh()
+            } else {
+                Toast.makeText(requireContext(), "Failed to delete recipe", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
