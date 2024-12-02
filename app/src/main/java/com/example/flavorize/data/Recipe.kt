@@ -15,7 +15,7 @@ data class Recipe(
     val instructions: List<String> = emptyList(),
     val userId: String = "",
     val imageUrl: String = "",
-    val userName: String = "Unknown User",
+    val userName: String = "-",
     val bookmarkedBy: List<String> = emptyList(), // Tambahkan ini
     var isBookmarked: Boolean = false // New property
 ) : Parcelable

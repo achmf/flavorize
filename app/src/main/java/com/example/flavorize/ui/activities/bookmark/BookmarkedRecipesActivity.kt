@@ -2,14 +2,15 @@ package com.example.flavorize.ui.activities.bookmark
 
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.data.FirestoreRepository
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.ActivityBookmarkedRecipesBinding
 import com.example.flavorize.ui.fragments.recipes.viewmodel.RecipesFragmentViewModel
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,6 +19,7 @@ class BookmarkedRecipesActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityBookmarkedRecipesBinding
     private lateinit var bookmarkedRecipesAdapter: BookmarkedRecipesAdapter
+    private val recipesViewModel: RecipesFragmentViewModel by viewModels()
     private val firestoreRepository = FirestoreRepository()
     private val userId: String by lazy { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
 
@@ -34,61 +36,47 @@ class BookmarkedRecipesActivity : AppCompatActivity() {
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        binding.toolbar.setNavigationOnClickListener {
-            onBackPressed() // Handle back button click
-        }
+        binding.toolbar.setNavigationOnClickListener { onBackPressed() }
     }
 
     private fun setupRecyclerView() {
         bookmarkedRecipesAdapter = BookmarkedRecipesAdapter(
             mutableListOf(),
-            onBookmarkToggle = { recipe ->
-                unbookmarkRecipe(recipe)
-            }
+            onBookmarkToggle = { recipe -> unbookmarkRecipe(recipe) }
         )
         binding.bookmarkedRecipesRecyclerView.layoutManager = GridLayoutManager(this, 2)
         binding.bookmarkedRecipesRecyclerView.adapter = bookmarkedRecipesAdapter
     }
 
     private fun fetchBookmarkedRecipes() {
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) { firestoreRepository.getUserBookmarkedRecipes(userId) }
             if (result.isSuccess) {
                 val recipes = result.getOrDefault(emptyList())
-                if (recipes.isEmpty()) {
-                    Toast.makeText(
-                        this@BookmarkedRecipesActivity,
-                        "No bookmarked recipes found.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
                 bookmarkedRecipesAdapter.updateBookmarkedRecipes(recipes)
+                if (recipes.isEmpty()) {
+                    showToast("No bookmarked recipes found.")
+                }
             } else {
-                Toast.makeText(
-                    this@BookmarkedRecipesActivity,
-                    "Failed to fetch bookmarked recipes: ${result.exceptionOrNull()?.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                showToast("Failed to fetch bookmarked recipes: ${result.exceptionOrNull()?.message}")
             }
         }
     }
 
     private fun unbookmarkRecipe(recipe: Recipe) {
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) { firestoreRepository.removeBookmark(userId, recipe.id) }
             if (result.isSuccess) {
                 bookmarkedRecipesAdapter.removeRecipe(recipe)
-                Toast.makeText(this@BookmarkedRecipesActivity, "Bookmark removed!", Toast.LENGTH_SHORT).show()
-
-                // Notify the ViewModel about the bookmark change
-                RecipesFragmentViewModel().notifyBookmarkChange()
+                recipesViewModel.notifyBookmarkChange() // Sync changes with ViewModel
+                showToast("Bookmark removed!")
             } else {
-                Toast.makeText(
-                    this@BookmarkedRecipesActivity,
-                    "Failed to remove bookmark: ${result.exceptionOrNull()?.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                showToast("Failed to remove bookmark: ${result.exceptionOrNull()?.message}")
             }
         }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

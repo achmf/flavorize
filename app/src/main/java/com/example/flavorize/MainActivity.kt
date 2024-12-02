@@ -147,6 +147,12 @@ class MainActivity : AppCompatActivity() {
                     binding.drawerLayout.closeDrawers()
                     true
                 }
+                R.id.navigation_settings -> { // Handle navigation to SettingsActivity
+                    val intent = Intent(this, SettingsActivity::class.java)
+                    startActivity(intent)
+                    binding.drawerLayout.closeDrawers()
+                    true
+                }
                 else -> {
                     menuItem.onNavDestinationSelected(navController) // Handle other navigation
                     binding.drawerLayout.closeDrawers()
@@ -283,7 +289,6 @@ class MainActivity : AppCompatActivity() {
         imm.hideSoftInputFromWindow(searchView.windowToken, 0)
     }
 
-
     override fun onBackPressed() {
         if (viewModel.isSearchBarVisible.value == true) {
             closeSearchBar() // Close search bar and reset search results
@@ -292,7 +297,6 @@ class MainActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
-
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()

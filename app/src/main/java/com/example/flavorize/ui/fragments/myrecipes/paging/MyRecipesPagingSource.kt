@@ -1,4 +1,4 @@
-package com.example.flavorize.ui.fragments.recipes.paging
+package com.example.flavorize.ui.fragments.myrecipes.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
@@ -7,8 +7,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.tasks.await
 
-class RecipesPagingSource(
-    private val firestore: FirebaseFirestore
+class MyRecipesPagingSource(
+    private val firestore: FirebaseFirestore,
+    private val userId: String
 ) : PagingSource<QuerySnapshot, Recipe>() {
 
     override suspend fun load(params: LoadParams<QuerySnapshot>): LoadResult<QuerySnapshot, Recipe> {
@@ -16,24 +17,19 @@ class RecipesPagingSource(
             val currentPage = params.key
             val pageSize = params.loadSize
 
-            // Query Firestore
+            // Query hanya untuk resep dengan userId sesuai user yang sedang login
             val query = firestore.collection("recipes")
-                .orderBy("name") // Sort by a field; ensure the field is indexed in Firestore
+                .whereEqualTo("userId", userId)
+                .orderBy("name")
                 .limit(pageSize.toLong())
 
             val snapshot = if (currentPage == null) {
-                query.get().await() // First page
+                query.get().await()
             } else {
-                query.startAfter(currentPage.documents.last()).get().await() // Subsequent pages
+                query.startAfter(currentPage.documents.last()).get().await()
             }
 
-            val recipes = snapshot.toObjects(Recipe::class.java).map { recipe ->
-                val userName = getUserNameById(recipe.userId) // Mendapatkan nama user
-                recipe.copy(userName = userName) // Tambahkan userName ke model Recipe
-            }
-
-
-            // Detect the end of data
+            val recipes = snapshot.toObjects(Recipe::class.java)
             val nextKey = if (recipes.isEmpty() || snapshot.size() < pageSize) null else snapshot
 
             LoadResult.Page(
@@ -49,15 +45,6 @@ class RecipesPagingSource(
     override fun getRefreshKey(state: PagingState<QuerySnapshot, Recipe>): QuerySnapshot? {
         return state.anchorPosition?.let { position ->
             state.closestPageToPosition(position)?.nextKey
-        }
-    }
-
-    private suspend fun getUserNameById(userId: String): String {
-        return try {
-            val userDocument = firestore.collection("users").document(userId).get().await()
-            userDocument.getString("name") ?: "Unknown User" // Default jika nama kosong
-        } catch (e: Exception) {
-            "Unknown User" // Default jika terjadi kesalahan
         }
     }
 }

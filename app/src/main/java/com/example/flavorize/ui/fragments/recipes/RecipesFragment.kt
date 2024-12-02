@@ -9,14 +9,15 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.filter
+import androidx.paging.map
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.databinding.FragmentRecipesBinding
 import com.example.flavorize.ui.activities.createform.CreateRecipeFormActivity
 import com.example.flavorize.ui.fragments.recipes.paging.RecipesPagingAdapter
 import com.example.flavorize.ui.fragments.recipes.viewmodel.RecipesFragmentViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -40,12 +41,7 @@ class RecipesFragment : Fragment() {
 
         setupRecyclerView()
         setupListeners()
-        setupSwipeToRefresh()
         observeViewModel()
-        observePagingData()
-
-        // Observe bookmark changes
-        observeBookmarkChanges()
 
         lifecycleScope.launch {
             recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
@@ -56,31 +52,40 @@ class RecipesFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh data Paging
-        lifecycleScope.launch {
-            recipesPagingAdapter.refresh() // Refresh dataset
-            recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
-                recipesPagingAdapter.submitData(pagingData)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId != null) {
+            recipesViewModel.startListeningForBookmarkChanges(userId)
+            recipesViewModel.bookmarkUpdates.observe(viewLifecycleOwner) { updatedBookmarks ->
+                lifecycleScope.launch {
+                    recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
+                        val updatedData = pagingData.map { recipe ->
+                            recipe.copy(isBookmarked = updatedBookmarks.contains(recipe.id))
+                        }
+                        recipesPagingAdapter.submitData(updatedData)
+                    }
+                }
             }
+        } else {
+            Toast.makeText(requireContext(), "Please log in to see bookmarks", Toast.LENGTH_SHORT).show()
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        recipesViewModel.stopListeningForBookmarkChanges()
+    }
+
     private fun setupRecyclerView() {
-        recipesPagingAdapter = RecipesPagingAdapter { recipe, isBookmarking ->
+        recipesPagingAdapter = RecipesPagingAdapter { recipe, isBookmarking, onComplete ->
             recipesViewModel.toggleBookmark(recipe, isBookmarking, {
-                // Success: No need to refresh here
+                onComplete(true)
                 Toast.makeText(
                     requireContext(),
                     if (isBookmarking) "Bookmarked!" else "Bookmark removed!",
                     Toast.LENGTH_SHORT
                 ).show()
             }, { error ->
-                // Find the position of the recipe to notify item change
-                val currentPosition = recipesPagingAdapter.snapshot().indexOf(recipe)
-                if (currentPosition != -1) { // Check if item exists in the current snapshot
-                    recipe.isBookmarked = !isBookmarking // Revert local change
-                    recipesPagingAdapter.notifyItemChanged(currentPosition)
-                }
+                onComplete(false)
                 Toast.makeText(requireContext(), "Error: $error", Toast.LENGTH_SHORT).show()
             })
         }
@@ -96,13 +101,6 @@ class RecipesFragment : Fragment() {
         }
     }
 
-    private fun setupSwipeToRefresh() {
-        binding.swipeRefreshLayout.setOnRefreshListener {
-            recipesPagingAdapter.refresh() // Refresh data
-            binding.swipeRefreshLayout.isRefreshing = false
-        }
-    }
-
     private fun observeViewModel() {
         recipesViewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             errorMessage?.let {
@@ -111,31 +109,14 @@ class RecipesFragment : Fragment() {
         }
     }
 
-    private fun observeBookmarkChanges() {
-        recipesViewModel.bookmarkChanges.observe(viewLifecycleOwner) { isChanged ->
-            if (isChanged && recipesViewModel.shouldRefreshOnResume) {
-                recipesPagingAdapter.refresh() // Refresh only if returning from another activity
-                recipesViewModel.resetBookmarkChangeFlag()
-            }
-        }
-    }
-
-    private fun observePagingData() {
-        lifecycleScope.launch {
-            recipesPagingAdapter.loadStateFlow.collectLatest { loadStates ->
-                // Set SwipeRefreshLayout to show loading state
-                binding.swipeRefreshLayout.isRefreshing = loadStates.refresh is LoadState.Loading
-            }
-        }
-    }
-
     fun performSearch(query: String?) {
         query?.let {
             lifecycleScope.launch {
-                recipesPagingAdapter.submitData(PagingData.empty()) // Clear current results
+                recipesPagingAdapter.submitData(PagingData.empty())
                 recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
                     val filteredPagingData = pagingData.filter { recipe ->
-                        recipe.name.contains(query, ignoreCase = true) || recipe.description.contains(query, ignoreCase = true)
+                        recipe.name.contains(query, ignoreCase = true) ||
+                                recipe.description.contains(query, ignoreCase = true)
                     }
                     recipesPagingAdapter.submitData(filteredPagingData)
                 }

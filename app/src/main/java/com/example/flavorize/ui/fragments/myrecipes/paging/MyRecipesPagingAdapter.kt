@@ -1,20 +1,21 @@
-package com.example.flavorize.ui.fragments.recipes.paging
+package com.example.flavorize.ui.fragments.myrecipes.paging
 
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.flavorize.R
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.databinding.ItemRecipeCardBinding
 import com.example.flavorize.ui.activities.recipedetail.RecipeDetailActivity
 
-class RecipesPagingAdapter(
-    private val onBookmarkToggle: (Recipe, Boolean, (Boolean) -> Unit) -> Unit
-) : PagingDataAdapter<Recipe, RecipesPagingAdapter.RecipeViewHolder>(RecipeDiffCallback) {
+class MyRecipesPagingAdapter(
+    private val onEditRecipe: (Recipe) -> Unit,
+    private val onDeleteRecipe: (Recipe) -> Unit
+) : PagingDataAdapter<Recipe, MyRecipesPagingAdapter.RecipeViewHolder>(RecipeDiffCallback) {
 
     inner class RecipeViewHolder(private val binding: ItemRecipeCardBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -23,44 +24,43 @@ class RecipesPagingAdapter(
             binding.recipeNameTextView.text = recipe.name
             binding.recipeDescriptionTextView.text = recipe.description
             binding.recipeServingsTextView.text = recipe.servings.toString()
-            binding.recipeCookingTimeTextView.text = "${recipe.cookingTime} min"
+            binding.recipeCookingTimeTextView.text = recipe.cookingTime
             binding.recipeUserNameTextView.text = recipe.userName
 
             Glide.with(binding.root.context)
                 .load(recipe.imageUrl)
                 .into(binding.recipeImageView)
 
-            updateBookmarkIcon(recipe.isBookmarked)
+            // Single tap untuk melihat detail
+            binding.root.setOnClickListener { navigateToRecipeDetail(recipe) }
 
-            binding.bookmarkIcon.setOnClickListener {
-                val newBookmarkStatus = !recipe.isBookmarked
-                updateBookmarkIcon(newBookmarkStatus)
-                onBookmarkToggle(recipe, newBookmarkStatus) { success ->
-                    if (!success) {
-                        updateBookmarkIcon(recipe.isBookmarked)
-                    } else {
-                        recipe.isBookmarked = newBookmarkStatus
-                        notifyItemChanged(bindingAdapterPosition)
-                    }
-                }
-            }
-
-            binding.root.setOnClickListener {
-                val context = binding.root.context
-                val intent = Intent(context, RecipeDetailActivity::class.java).apply {
-                    putExtra("recipe", recipe)
-                }
-                context.startActivity(intent)
+            // Long press untuk menampilkan dialog opsi
+            binding.root.setOnLongClickListener {
+                showOptionsDialog(recipe)
+                true
             }
         }
 
-        private fun updateBookmarkIcon(isBookmarked: Boolean) {
-            val bookmarkIconRes = if (isBookmarked) {
-                R.drawable.ic_bookmark_filled
-            } else {
-                R.drawable.ic_bookmark_border
+        private fun showOptionsDialog(recipe: Recipe) {
+            val options = arrayOf("Edit Recipe", "Delete Recipe") // Opsi "View Recipe" dihapus
+            val dialog = AlertDialog.Builder(binding.root.context)
+                .setTitle("Choose an action")
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> onEditRecipe(recipe) // Edit Recipe
+                        1 -> onDeleteRecipe(recipe) // Delete Recipe
+                    }
+                }
+                .create()
+            dialog.show()
+        }
+
+        private fun navigateToRecipeDetail(recipe: Recipe) {
+            val context = binding.root.context
+            val intent = Intent(context, RecipeDetailActivity::class.java).apply {
+                putExtra("recipe", recipe)
             }
-            binding.bookmarkIcon.setImageResource(bookmarkIconRes)
+            context.startActivity(intent)
         }
     }
 
