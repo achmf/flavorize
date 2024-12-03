@@ -17,8 +17,8 @@ class SettingsActivity : AppCompatActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true) // Enable back button
-            setHomeAsUpIndicator(R.drawable.ic_back_arrow) // Custom back button icon
+            setDisplayHomeAsUpEnabled(true)
+            setHomeAsUpIndicator(R.drawable.ic_back_arrow)
             title = "Settings"
         }
 

@@ -1,7 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base Theme for Dark Mode -->
     <style name="Base.Theme.Flavorize" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Status Bar -->
+        <item name="android:statusBarColor">@color/background_dark</item>
+        <item name="android:windowLightStatusBar">false</item> <!-- Set status bar text to light -->
+
+        <!-- Primary Theme Colors -->
+        <item name="colorPrimary">@color/background_dark</item>
+        <item name="colorOnPrimary">@color/text_primary_dark</item>
+        <item name="colorSecondary">@color/divider_dark</item>
+        <item name="colorOnSecondary">@color/text_primary_dark</item>
+
+        <!-- Background Colors -->
+        <item name="colorBackground">@color/background_dark</item>
+        <item name="colorSurface">@color/divider_dark</item>
+        <item name="colorOnSurface">@color/text_primary_dark</item>
+
+        <!-- Text Colors -->
+        <item name="textColorPrimary">@color/text_primary_dark</item>
+        <item name="textColorSecondary">@color/text_secondary_dark</item>
+
+        <!-- Divider -->
+        <item name="dividerColor">@color/divider_dark</item>
     </style>
 </resources>

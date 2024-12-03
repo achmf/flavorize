@@ -1,7 +1,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#E0F7FA" /> <!-- Background color for the current user's comment -->
-    <corners android:radius="8dp" /> <!-- Rounded corners -->
+    <solid android:color="@color/brand_orange_tint" /> <!-- Background color for the current user's comment -->
+    <corners android:radius="10dp" /> <!-- Rounded corners -->
     <stroke
         android:width="2dp"
-        android:color="#0097A7" /> <!-- Border color for emphasis -->
+        android:color="@color/brand_orange" /> <!-- Border color for emphasis -->
 </shape>
