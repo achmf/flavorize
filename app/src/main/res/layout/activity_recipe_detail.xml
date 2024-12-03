@@ -4,18 +4,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     tools:context=".ui.activities.recipedetail.RecipeDetailActivity">
 
     <!-- Toolbar -->
-    <com.google.android.material.appbar.MaterialToolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/white"
-        android:elevation="4dp"
-        app:title="Recipe Details"
-        app:titleTextColor="@color/black"
-        app:navigationIcon="@drawable/ic_back_arrow" />
+        android:background="?attr/colorPrimary"
+        app:titleTextColor="?attr/colorOnPrimary"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        app:navigationIcon="@drawable/ic_back_arrow"
+        app:navigationIconTint="?attr/colorOnPrimary"
+        android:elevation="4dp" />
 
     <!-- SwipeRefreshLayout -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -29,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:background="@color/white">
+            android:background="?attr/colorBackground">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -45,7 +48,7 @@
                     app:cardCornerRadius="16dp"
                     app:cardElevation="4dp"
                     app:shapeAppearanceOverlay="@style/RoundedBottomCornersOnly"
-                    android:backgroundTint="@color/white"
+                    android:backgroundTint="?attr/colorSurface"
                     android:layout_marginBottom="16dp">
 
                     <LinearLayout
@@ -84,15 +87,14 @@
                                 android:layout_height="wrap_content"
                                 android:textSize="20sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/black"
-                                android:layout_marginBottom="8dp" />
+                                android:textColor="?attr/colorOnSurface" />
 
                             <TextView
                                 android:id="@+id/recipeDescriptionTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="16sp"
-                                android:textColor="@color/gray"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="16dp" />
 
                             <TextView
@@ -102,6 +104,7 @@
                                 android:text="Info:"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="8dp" />
 
                             <TextView
@@ -109,6 +112,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="16sp"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="8dp" />
 
                             <TextView
@@ -116,6 +120,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="16sp"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="8dp" />
 
                             <TextView
@@ -123,6 +128,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="16sp"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="32dp" />
 
                             <TextView
@@ -132,6 +138,7 @@
                                 android:text="Ingredients:"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="8dp" />
 
                             <TextView
@@ -139,6 +146,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:textSize="16sp"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="16dp" />
 
                             <TextView
@@ -148,6 +156,7 @@
                                 android:text="Instructions:"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="8dp" />
 
                             <TextView
@@ -155,6 +164,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:textSize="16sp"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="16dp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -168,6 +178,7 @@
                     android:text="Comments:"
                     android:textSize="18sp"
                     android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
                     android:layout_marginBottom="8dp" />
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -177,30 +188,60 @@
                     android:nestedScrollingEnabled="false"
                     android:layout_marginBottom="16dp" />
 
+                <TextView
+                    android:id="@+id/noCommentsTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No comments yet. Be the first to comment!"
+                    android:visibility="gone"
+                    android:layout_gravity="center"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    android:padding="16dp" />
+
+
                 <!-- Add Comment Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <EditText
-                        android:id="@+id/commentEditText"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/commentInputLayout"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:hint="Write a comment"
-                        android:padding="8dp"
-                        android:background="@drawable/comment_background" />
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        app:boxBackgroundMode="outline"
+                        app:boxStrokeColor="@color/text_input_stroke_color"
+                        app:hintTextColor="@color/text_input_hint_color"
+                        app:boxStrokeWidth="1dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusBottomEnd="16dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/commentEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textColorHint="?attr/colorOnSurface" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/addCommentButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Post"
+                        android:backgroundTint="@color/brand_orange"
+                        android:text="Send"
+                        android:textColor="@color/white"
+                        app:cornerRadius="24dp"
                         android:layout_marginStart="8dp"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:backgroundTint="@color/black"
-                        android:textColor="@android:color/white" />
+                        android:contentDescription="Post Comment" />
+
                 </LinearLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>

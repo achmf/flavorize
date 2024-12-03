@@ -11,10 +11,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
+        app:itemTextColor="?attr/colorOnPrimary"
         android:theme="?attr/actionBarTheme"
         android:elevation="4dp"
         app:title="Create Recipe"
-        app:titleTextColor="@android:color/white"
+        app:titleTextColor="?attr/colorOnPrimary"
         app:navigationIcon="@drawable/ic_back_arrow" />
 
     <ScrollView
@@ -66,7 +67,7 @@
                 android:layout_marginTop="16dp"
                 android:contentDescription="Recipe Image"
                 android:scaleType="fitCenter"
-                android:src="@android:drawable/ic_menu_camera" />
+                android:src="@drawable/ic_image" />
 
             <LinearLayout
                 android:id="@+id/recipeIngredientsLayout"
@@ -84,6 +85,7 @@
                     android:id="@+id/addIngredientButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:backgroundTint="@color/brand_orange"
                     android:text="+ Add"
                     android:layout_marginTop="8dp" />
             </LinearLayout>
@@ -104,6 +106,7 @@
                     android:id="@+id/addInstructionButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:backgroundTint="@color/brand_orange"
                     android:text="+ Add"
                     android:layout_marginTop="8dp" />
             </LinearLayout>
@@ -112,6 +115,7 @@
                 android:id="@+id/submitRecipeButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/brand_orange"
                 android:text="Submit Recipe"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp" />
@@ -120,6 +124,7 @@
                 android:id="@+id/draftRecipeButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/brand_orange"
                 android:text="Save as Draft"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp" />

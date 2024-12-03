@@ -17,10 +17,11 @@
             android:id="@+id/toolbar_default"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/white"
-            app:titleTextColor="@color/black"
+            android:background="?attr/colorPrimary"
+            app:titleTextColor="?attr/colorOnPrimary"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-            app:navigationIconTint="@color/black" />
+            app:navigationIconTint="?attr/colorOnPrimary"
+            android:elevation="4dp" />
 
         <!-- Search Toolbar -->
         <com.google.android.material.appbar.MaterialToolbar
@@ -28,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:visibility="gone"
-            android:background="@color/white"
+            android:background="?attr/colorPrimary"
             app:navigationIcon="@drawable/ic_back_arrow"
             app:navigationContentDescription="Back">
 
@@ -55,7 +56,11 @@
             android:id="@+id/bottom_nav_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:menu="@menu/bottom_nav_menu" />
+            app:menu="@menu/bottom_nav_menu"
+            app:itemIconTint="@color/bottom_nav_item_color"
+            app:itemTextColor="@color/bottom_nav_item_color"
+            app:backgroundTint="?attr/colorPrimary"
+            android:elevation="8dp" />
     </LinearLayout>
 
     <com.google.android.material.navigation.NavigationView
@@ -63,7 +68,9 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/drawer_menu"
-        android:backgroundTint="@color/white"
-        app:headerLayout="@layout/nav_drawer_header" />
+        android:background="?attr/colorSurface"
+        app:itemIconTint="?attr/colorOnSurface"
+        app:itemTextColor="?attr/colorOnSurface"
+        app:headerLayout="@layout/nav_drawer_header"
+        app:menu="@menu/drawer_menu" />
 </androidx.drawerlayout.widget.DrawerLayout>

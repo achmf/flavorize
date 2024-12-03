@@ -11,10 +11,12 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/white"
-        app:titleTextColor="@color/black"
+        android:background="?attr/colorPrimary"
+        app:titleTextColor="?attr/colorOnPrimary"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        app:navigationIconTint="@color/black" />
+        app:navigationIcon="@drawable/ic_back_arrow"
+        app:navigationIconTint="?attr/colorOnPrimary"
+        android:elevation="4dp" />
 
     <!-- Content -->
     <LinearLayout

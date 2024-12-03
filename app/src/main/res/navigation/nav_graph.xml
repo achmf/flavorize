@@ -14,9 +14,6 @@
             android:id="@+id/action_home_to_recipes"
             app:destination="@id/navigation_recipes" />
         <action
-            android:id="@+id/action_home_to_profile"
-            app:destination="@id/navigation_profile" />
-        <action
             android:id="@+id/action_home_to_my_recipes"
             app:destination="@id/navigation_my_recipes" />
     </fragment>
@@ -30,26 +27,7 @@
             android:id="@+id/action_recipes_to_home"
             app:destination="@id/navigation_home" />
         <action
-            android:id="@+id/action_recipes_to_profile"
-            app:destination="@id/navigation_profile" />
-        <action
             android:id="@+id/action_recipes_to_my_recipes"
-            app:destination="@id/navigation_my_recipes" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigation_profile"
-        android:name="com.example.flavorize.ui.fragments.profile.ProfileFragment"
-        android:label="@string/title_profile"
-        tools:layout="@layout/fragment_profile" >
-        <action
-            android:id="@+id/action_profile_to_home"
-            app:destination="@id/navigation_home" />
-        <action
-            android:id="@+id/action_profile_to_recipes"
-            app:destination="@id/navigation_recipes" />
-        <action
-            android:id="@+id/action_profile_to_my_recipes"
             app:destination="@id/navigation_my_recipes" />
     </fragment>
 
@@ -64,9 +42,6 @@
         <action
             android:id="@+id/action_my_recipes_to_recipes"
             app:destination="@id/navigation_recipes" />
-        <action
-            android:id="@+id/action_my_recipes_to_profile"
-            app:destination="@id/navigation_profile" />
     </fragment>
 
 </navigation>

@@ -53,6 +53,9 @@ android {
 }
 
 dependencies {
+    // MaterialDesign 3
+    implementation(libs.material)
+
     // Glide
     implementation (libs.glide)
 
