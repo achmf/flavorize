@@ -16,24 +16,27 @@ class BookmarkedRecipesAdapter(
     private val onBookmarkToggle: (Recipe) -> Unit
 ) : RecyclerView.Adapter<BookmarkedRecipesAdapter.BookmarkedRecipeViewHolder>() {
 
+    // ViewHolder to bind recipe data to the item layout
     inner class BookmarkedRecipeViewHolder(private val binding: ItemRecipeCardBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
+        // Bind recipe details to the UI elements
         fun bind(recipe: Recipe, context: Context) {
             binding.recipeNameTextView.text = recipe.name
             binding.recipeDescriptionTextView.text = recipe.description
-            binding.recipeServingsTextView.text = "${recipe.servings}"
+            binding.recipeServingsTextView.text = recipe.servings.toString()
             binding.recipeCookingTimeTextView.text = "${recipe.cookingTime} min"
-            binding.recipeUserNameTextView.text = "by ${recipe.userName}"
+            binding.recipeUserNameTextView.text = recipe.userName
 
+            // Load recipe image using Glide
             Glide.with(context)
                 .load(recipe.imageUrl)
                 .into(binding.recipeImageView)
 
-            // Always display the bookmark icon as filled
+            // Set bookmark icon as filled
             binding.bookmarkIcon.setImageResource(R.drawable.ic_bookmark_filled)
 
-            // Handle unbookmarking on icon click
+            // Handle unbookmark action
             binding.bookmarkIcon.setOnClickListener {
                 onBookmarkToggle(recipe)
             }
@@ -47,6 +50,7 @@ class BookmarkedRecipesAdapter(
         }
     }
 
+    // Inflate the layout for the ViewHolder
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookmarkedRecipeViewHolder {
         val binding = ItemRecipeCardBinding.inflate(
             LayoutInflater.from(parent.context),
@@ -56,23 +60,18 @@ class BookmarkedRecipesAdapter(
         return BookmarkedRecipeViewHolder(binding)
     }
 
+    // Bind data to the ViewHolder
     override fun onBindViewHolder(holder: BookmarkedRecipeViewHolder, position: Int) {
         holder.bind(bookmarkedRecipes[position], holder.itemView.context)
     }
 
+    // Return the size of the recipe list
     override fun getItemCount(): Int = bookmarkedRecipes.size
 
+    // Update the adapter with new recipe data
     fun updateBookmarkedRecipes(newRecipes: List<Recipe>) {
         bookmarkedRecipes.clear()
         bookmarkedRecipes.addAll(newRecipes)
         notifyDataSetChanged()
-    }
-
-    fun removeRecipe(recipe: Recipe) {
-        val index = bookmarkedRecipes.indexOfFirst { it.id == recipe.id }
-        if (index != -1) {
-            bookmarkedRecipes.removeAt(index)
-            notifyItemRemoved(index)
-        }
     }
 }

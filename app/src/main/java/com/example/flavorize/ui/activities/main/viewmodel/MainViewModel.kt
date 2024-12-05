@@ -1,4 +1,4 @@
-package com.example.flavorize
+package com.example.flavorize.ui.activities.main.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -25,10 +25,11 @@ class MainViewModel : ViewModel() {
     val isSearchBarVisible: LiveData<Boolean> get() = _isSearchBarVisible
 
     init {
-        loadUserProfile()
-        _isSearchBarVisible.value = false // Search bar is hidden initially
+        loadUserProfile() // Load user profile data
+        _isSearchBarVisible.value = false // Search bar is hidden by default
     }
 
+    // Load user profile from Firebase
     private fun loadUserProfile() {
         val user: FirebaseUser? = auth.currentUser
         if (user != null) {
@@ -38,10 +39,12 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    // Show the search bar
     fun showSearchBar() {
         _isSearchBarVisible.value = true
     }
 
+    // Hide the search bar
     fun hideSearchBar() {
         _isSearchBarVisible.value = false
     }

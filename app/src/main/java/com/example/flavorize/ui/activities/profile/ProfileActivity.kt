@@ -11,7 +11,7 @@ import androidx.appcompat.widget.Toolbar
 import com.bumptech.glide.Glide
 import com.example.flavorize.R
 import com.example.flavorize.databinding.ActivityProfileBinding
-import com.example.flavorize.ui.auth.LoginActivity
+import com.example.flavorize.ui.activities.auth.LoginActivity
 import com.example.flavorize.ui.activities.profile.viewmodel.ProfileActivityViewModel
 
 class ProfileActivity : AppCompatActivity() {
@@ -28,25 +28,28 @@ class ProfileActivity : AppCompatActivity() {
         val toolbar: Toolbar = binding.toolbar
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true) // Back button
+            setDisplayHomeAsUpEnabled(true) // Enable back button
             setHomeAsUpIndicator(R.drawable.ic_back_arrow) // Custom back button icon if needed
-            title = "Profile"
+            title = "Profile" // Set title
         }
 
-        observeViewModel()
-        viewModel.loadUserProfile()
+        observeViewModel() // Observe ViewModel LiveData
+        viewModel.loadUserProfile() // Load user profile data
 
+        // Handle logout button click
         binding.logoutButton.setOnClickListener {
             viewModel.logout()
             navigateToLogin() // Navigate to LoginActivity
         }
 
+        // Handle delete account button click
         binding.deleteAccountButton.setOnClickListener {
             viewModel.deleteAccount()
         }
     }
 
     private fun observeViewModel() {
+        // Observe user avatar LiveData and update UI
         viewModel.userAvatar.observe(this) { avatarUrl ->
             Glide.with(this)
                 .load(avatarUrl)
@@ -54,14 +57,17 @@ class ProfileActivity : AppCompatActivity() {
                 .into(binding.userAvatarImageView)
         }
 
+        // Observe user name LiveData and update UI
         viewModel.userName.observe(this) { name ->
             binding.userNameTextView.text = name ?: "Unknown User"
         }
 
+        // Observe user email LiveData and update UI
         viewModel.userEmail.observe(this) { email ->
             binding.userEmailTextView.text = email ?: "No Email"
         }
 
+        // Observe account deletion status and handle UI accordingly
         viewModel.isDeleted.observe(this) { isDeleted ->
             if (isDeleted) {
                 Toast.makeText(this, "Account deleted successfully", Toast.LENGTH_SHORT).show()
@@ -73,6 +79,7 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        // Inflate menu for profile activity
         menuInflater.inflate(R.menu.profile_menu, menu)
         return true
     }
@@ -80,7 +87,7 @@ class ProfileActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                // Handle back button
+                // Handle back button click
                 finish()
                 true
             }
@@ -94,6 +101,7 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun navigateToLogin() {
+        // Navigate to LoginActivity and clear activity stack
         val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

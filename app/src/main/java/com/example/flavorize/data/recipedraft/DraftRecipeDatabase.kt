@@ -22,7 +22,7 @@ abstract class DraftRecipeDatabase : RoomDatabase() {
                     DraftRecipeDatabase::class.java,
                     "draft_recipe_database"
                 )
-                    .fallbackToDestructiveMigration() // Hapus data lama jika tidak ada migrasi
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

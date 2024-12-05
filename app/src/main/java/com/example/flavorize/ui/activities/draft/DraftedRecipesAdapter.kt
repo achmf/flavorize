@@ -1,4 +1,4 @@
-package com.example.flavorize.ui.activities.createform.draft
+package com.example.flavorize.ui.activities.draft
 
 import android.view.LayoutInflater
 import android.view.View

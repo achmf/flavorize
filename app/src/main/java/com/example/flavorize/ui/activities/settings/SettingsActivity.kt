@@ -1,10 +1,11 @@
-package com.example.flavorize
+package com.example.flavorize.ui.activities.settings
 
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.AppCompatDelegate
+import com.example.flavorize.R
 import com.google.android.material.materialswitch.MaterialSwitch
 
 class SettingsActivity : AppCompatActivity() {

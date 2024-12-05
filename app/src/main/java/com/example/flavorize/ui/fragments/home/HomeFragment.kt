@@ -5,17 +5,30 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.findNavController
+import com.example.flavorize.R
 import com.example.flavorize.databinding.FragmentHomeBinding
-import com.example.flavorize.ui.fragments.home.viewmodel.HomeFragmentViewModel
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    private val homeViewModel: HomeFragmentViewModel by viewModels()
-    private lateinit var homeAdapter: HomeAdapter
+    private val images = listOf(
+        R.drawable.image1,
+        R.drawable.image2,
+        R.drawable.image3,
+        R.drawable.image4,
+        R.drawable.image5
+    )
+    private var currentImageIndex = 0
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val imageSwitcherRunnable = object : Runnable {
+        override fun run() {
+            updateImage()
+            handler.postDelayed(this, 5000) // Switch image every 5 seconds
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -28,45 +41,40 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupRecyclerView()
-        observeViewModel()
+        setupImageSwitcher()
+        setupDynamicInfoContent()
     }
 
-    private fun setupRecyclerView() {
-        homeAdapter = HomeAdapter(emptyList())
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = homeAdapter
-        }
+    private fun setupImageSwitcher() {
+        handler.post(imageSwitcherRunnable) // Start image switching
     }
 
-    private fun observeViewModel() {
-        homeViewModel.content.observe(viewLifecycleOwner) { content ->
-            homeAdapter.updateContent(content)
-        }
+    private fun updateImage() {
+        currentImageIndex = (currentImageIndex + 1) % images.size
+        binding.imageCarousel.setImageResource(images[currentImageIndex])
     }
 
-    fun performSearch(query: String?) {
-        query?.let {
-            homeViewModel.content.value?.let { content ->
-                val filteredContent = content.filter { item ->
-                    item.title.contains(query, ignoreCase = true) || item.description.contains(query, ignoreCase = true)
-                }
-                homeAdapter.updateContent(filteredContent)
-            }
-        }
-    }
+    private fun setupDynamicInfoContent() {
+        // Example dynamic content
+        val dynamicFeatures = listOf(
+            "• Discover thousands of curated recipes.",
+            "• Share your favorite recipes with the community.",
+            "• Save your favorite recipes in bookmarks.",
+            "• Get inspired with daily cooking ideas.",
+            "• Easy-to-use app for all food enthusiasts."
+        )
 
-    fun resetSearch() {
-        // Reset the RecyclerView to show the full list of content
-        homeViewModel.content.value?.let { content ->
-            homeAdapter.updateContent(content)
-        }
+        // Combine the list into a single string with newlines
+        val dynamicContent = dynamicFeatures.joinToString("\n")
+
+        // Set the dynamic content to the TextView
+        binding.infoContent.text = dynamicContent
     }
 
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        handler.removeCallbacks(imageSwitcherRunnable) // Stop handler when the fragment is destroyed
     }
 }

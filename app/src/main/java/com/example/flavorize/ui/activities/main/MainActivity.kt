@@ -1,4 +1,4 @@
-package com.example.flavorize
+package com.example.flavorize.ui.activities.main
 
 import android.content.Context
 import android.content.Intent
@@ -22,12 +22,14 @@ import androidx.navigation.ui.onNavDestinationSelected
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
+import com.example.flavorize.R
 import com.example.flavorize.databinding.ActivityMainBinding
 import com.example.flavorize.ui.activities.bookmark.BookmarkedRecipesActivity
-import com.example.flavorize.ui.activities.createform.draft.DraftedRecipesActivity
-import com.example.flavorize.ui.auth.LoginActivity
+import com.example.flavorize.ui.activities.draft.DraftedRecipesActivity
+import com.example.flavorize.ui.activities.main.viewmodel.MainViewModel
 import com.example.flavorize.ui.activities.profile.ProfileActivity
-import com.example.flavorize.ui.fragments.home.HomeFragment
+import com.example.flavorize.ui.activities.settings.SettingsActivity
+import com.example.flavorize.ui.activities.auth.LoginActivity
 import com.example.flavorize.ui.fragments.myrecipes.MyRecipesFragment
 import com.example.flavorize.ui.fragments.recipes.RecipesFragment
 import com.google.firebase.auth.FirebaseAuth
@@ -48,24 +50,27 @@ class MainActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         if (auth.currentUser == null) {
+            // Redirect to login if user is not authenticated
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
         }
 
-        setupDefaultToolbar()
-        setupNavigation()
-        setupSearchToolbar()
-        setupDrawerHeader()
-        observeViewModel()
-        setupSearchFunctionality() // NEW
+        setupDefaultToolbar() // Setup the default toolbar
+        setupNavigation() // Setup navigation components
+        setupSearchToolbar() // Configure the search toolbar
+        setupDrawerHeader() // Setup the navigation drawer header
+        observeViewModel() // Observe LiveData from the ViewModel
+        setupSearchFunctionality() // Configure search functionality
     }
 
     private fun setupDefaultToolbar() {
+        // Set the default toolbar
         setSupportActionBar(binding.toolbarDefault)
     }
 
     private fun setupSearchToolbar() {
+        // Configure the search toolbar
         val searchToolbar = binding.toolbarSearch
         val searchView = searchToolbar.findViewById<SearchView>(R.id.searchView)
 
@@ -74,7 +79,7 @@ class MainActivity : AppCompatActivity() {
             viewModel.hideSearchBar()
         }
 
-        // SearchView query listeners
+        // Handle search actions
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 Toast.makeText(this@MainActivity, "Searching for: $query", Toast.LENGTH_SHORT).show()
@@ -82,13 +87,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                // Optional: Real-time filtering or suggestions
+                // Optional: Add real-time suggestions here
                 return false
             }
         })
     }
 
     private fun setupNavigation() {
+        // Configure navigation components
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
@@ -108,11 +114,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupDrawerHeader() {
+        // Configure the navigation drawer header
         val headerView = binding.navView.getHeaderView(0)
         val userAvatar = headerView.findViewById<ImageView>(R.id.headerUserAvatar)
         val userName = headerView.findViewById<TextView>(R.id.headerUserName)
         val userEmail = headerView.findViewById<TextView>(R.id.headerUserEmail)
 
+        // Observe user details from the ViewModel
         viewModel.userAvatar.observe(this) { avatarUrl ->
             Glide.with(this)
                 .load(avatarUrl)
@@ -128,33 +136,35 @@ class MainActivity : AppCompatActivity() {
             userEmail.text = email ?: "No Email"
         }
 
-        // Add onClickListener for profile navigation
+        // Handle profile navigation
         userAvatar.setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
+        // Handle navigation item clicks
         binding.navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.navigation_bookmarked -> {
-                    val intent = Intent(this, BookmarkedRecipesActivity::class.java)
-                    startActivity(intent)
+                    // Open bookmarked recipes
+                    startActivity(Intent(this, BookmarkedRecipesActivity::class.java))
                     binding.drawerLayout.closeDrawers()
                     true
                 }
                 R.id.navigation_drafted -> {
-                    val intent = Intent(this, DraftedRecipesActivity::class.java)
-                    startActivity(intent)
+                    // Open drafted recipes
+                    startActivity(Intent(this, DraftedRecipesActivity::class.java))
                     binding.drawerLayout.closeDrawers()
                     true
                 }
-                R.id.navigation_settings -> { // Handle navigation to SettingsActivity
-                    val intent = Intent(this, SettingsActivity::class.java)
-                    startActivity(intent)
+                R.id.navigation_settings -> {
+                    // Open settings
+                    startActivity(Intent(this, SettingsActivity::class.java))
                     binding.drawerLayout.closeDrawers()
                     true
                 }
                 else -> {
-                    menuItem.onNavDestinationSelected(navController) // Handle other navigation
+                    // Handle other navigation items
+                    menuItem.onNavDestinationSelected(navController)
                     binding.drawerLayout.closeDrawers()
                     true
                 }
@@ -163,72 +173,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSearchFunctionality() {
+        // Configure search behavior based on the selected destination
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.navigation_recipes -> {
-                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView).setOnQueryTextListener(
-                        object : SearchView.OnQueryTextListener {
-                            override fun onQueryTextSubmit(query: String?): Boolean {
-                                val currentFragment =
-                                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
-                                if (currentFragment is RecipesFragment) {
-                                    currentFragment.performSearch(query) // Pass the query to RecipesFragment
-                                }
-                                return true
-                            }
-
-                            override fun onQueryTextChange(newText: String?): Boolean {
-                                // Optional: Implement real-time suggestions here
-                                return false
-                            }
-                        }
-                    )
-                }
-
-                R.id.navigation_my_recipes -> {
-                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView).setOnQueryTextListener(
-                        object : SearchView.OnQueryTextListener {
-                            override fun onQueryTextSubmit(query: String?): Boolean {
-                                val currentFragment =
-                                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
-                                if (currentFragment is MyRecipesFragment) {
-                                    currentFragment.performSearch(query) // Pass the query to MyRecipesFragment
-                                }
-                                return true
-                            }
-
-                            override fun onQueryTextChange(newText: String?): Boolean {
-                                // Optional: Implement real-time suggestions here
-                                return false
-                            }
-                        }
-                    )
-                }
-
                 R.id.navigation_home -> {
-                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView).setOnQueryTextListener(
-                        object : SearchView.OnQueryTextListener {
+                    // Hide search icon on HomeFragment
+                    invalidateOptionsMenu()
+                }
+                R.id.navigation_recipes -> {
+                    // Show search on RecipesFragment
+                    invalidateOptionsMenu()
+                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView)
+                        .setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                             override fun onQueryTextSubmit(query: String?): Boolean {
-                                val currentFragment =
-                                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
-                                if (currentFragment is HomeFragment) {
-                                    currentFragment.performSearch(query) // Pass the query to HomeFragment
-                                }
+                                // Pass search query to RecipesFragment
+                                (getCurrentFragment() as? RecipesFragment)?.performSearch(query)
                                 return true
                             }
 
                             override fun onQueryTextChange(newText: String?): Boolean {
-                                // Optional: Implement real-time suggestions here
                                 return false
                             }
-                        }
-                    )
+                        })
+                }
+                R.id.navigation_my_recipes -> {
+                    // Show search on MyRecipesFragment
+                    invalidateOptionsMenu()
+                    binding.toolbarSearch.findViewById<SearchView>(R.id.searchView)
+                        .setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                // Pass search query to MyRecipesFragment
+                                (getCurrentFragment() as? MyRecipesFragment)?.performSearch(query)
+                                return true
+                            }
+
+                            override fun onQueryTextChange(newText: String?): Boolean {
+                                return false
+                            }
+                        })
                 }
             }
         }
     }
 
     private fun observeViewModel() {
+        // Observe search bar visibility
         viewModel.isSearchBarVisible.observe(this, Observer { isVisible ->
             if (isVisible) {
                 activateSearchBar()
@@ -239,11 +228,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        // Inflate the menu
         menuInflater.inflate(R.menu.app_bar_menu, menu)
+
+        // Hide search icon on HomeFragment
+        menu?.findItem(R.id.action_search)?.isVisible =
+            navController.currentDestination?.id != R.id.navigation_home
+
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle toolbar menu actions
         return when (item.itemId) {
             R.id.action_search -> {
                 viewModel.showSearchBar()
@@ -254,44 +250,47 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun activateSearchBar() {
+        // Show search bar
         binding.toolbarDefault.visibility = View.GONE
         binding.toolbarSearch.visibility = View.VISIBLE
 
         val searchView = binding.toolbarSearch.findViewById<SearchView>(R.id.searchView)
-        searchView.visibility = View.VISIBLE
-        searchView.isIconified = false // Ensure SearchView is not collapsed
-        searchView.requestFocus() // Focus on SearchView
+        searchView.isIconified = false
+        searchView.requestFocus()
 
         // Show keyboard
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.showSoftInput(searchView, InputMethodManager.SHOW_IMPLICIT)
+        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(
+            searchView,
+            InputMethodManager.SHOW_IMPLICIT
+        )
     }
 
     private fun closeSearchBar() {
+        // Hide search bar
         binding.toolbarSearch.visibility = View.GONE
         binding.toolbarDefault.visibility = View.VISIBLE
 
         val searchView = binding.toolbarSearch.findViewById<SearchView>(R.id.searchView)
-        searchView.setQuery("", false) // Clear input text
-        searchView.clearFocus() // Remove focus from SearchView
+        searchView.setQuery("", false)
+        searchView.clearFocus()
 
-        // Reset search results to their original state
-        val currentFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.childFragmentManager?.fragments?.firstOrNull()
-        when (currentFragment) {
-            is RecipesFragment -> currentFragment.resetSearch() // Call resetSearch on RecipesFragment
-            is MyRecipesFragment -> currentFragment.resetSearch() // Call resetSearch on MyRecipesFragment
-            is HomeFragment -> currentFragment.resetSearch() // Call resetSearch on HomeFragment
+        // Reset search on the current fragment
+        when (val currentFragment = getCurrentFragment()) {
+            is RecipesFragment -> currentFragment.resetSearch()
+            is MyRecipesFragment -> currentFragment.resetSearch()
         }
 
         // Hide keyboard
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(searchView.windowToken, 0)
+        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
+            searchView.windowToken,
+            0
+        )
     }
 
     override fun onBackPressed() {
+        // Close search bar if visible
         if (viewModel.isSearchBarVisible.value == true) {
-            closeSearchBar() // Close search bar and reset search results
+            closeSearchBar()
             viewModel.hideSearchBar()
         } else {
             super.onBackPressed()
@@ -299,6 +298,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
+        // Handle navigation up action
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
+
+    private fun getCurrentFragment() =
+        supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+            ?.childFragmentManager?.fragments?.firstOrNull()
 }
