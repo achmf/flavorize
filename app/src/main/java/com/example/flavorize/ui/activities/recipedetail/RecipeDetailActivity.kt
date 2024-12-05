@@ -6,6 +6,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -14,56 +15,87 @@ import com.example.flavorize.data.FirestoreRepository
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.data.RecipeComment
 import com.example.flavorize.databinding.ActivityRecipeDetailBinding
+import com.example.flavorize.ui.activities.recipedetail.viewmodel.RecipeDetailViewModel
 import kotlinx.coroutines.launch
 
 class RecipeDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRecipeDetailBinding
-    private val firestoreRepository = FirestoreRepository()
+    private lateinit var viewModel: RecipeDetailViewModel
     private val commentsAdapter = RecipeCommentsAdapter(
-        currentUserId = firestoreRepository.getCurrentUserId() ?: "", // Ambil ID user saat ini
+        currentUserId = FirestoreRepository().getCurrentUserId() ?: "", // Current user ID
         onCommentLongClick = { comment, view ->
-            showPopupMenu(comment, view) // Tampilkan popup menu saat komentar ditekan lama
+            showPopupMenu(comment, view) // Show popup menu on long click
         }
     )
-    private var recipe: Recipe? = null // Store the recipe object
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRecipeDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupToolbar()
-        setupSwipeToRefresh()
+        viewModel = ViewModelProvider(this)[RecipeDetailViewModel::class.java]
 
-        // Ambil data Recipe yang diteruskan melalui Intent
-        recipe = intent.getParcelableExtra("recipe")
-        recipe?.let {
-            bindRecipeDetails(it)
-            setupCommentsSection()
-        } ?: run {
+        setupToolbar() // Setup the toolbar
+        setupSwipeToRefresh() // Setup swipe-to-refresh functionality
+        setupObservers() // Observe LiveData from ViewModel
+        setupCommentsSection() // Setup comments section
+
+        // Get recipe data from intent
+        val recipe = intent.getParcelableExtra<Recipe>("recipe")
+        if (recipe != null) {
+            viewModel.setRecipe(recipe)
+        } else {
             Toast.makeText(this, "Recipe data not found", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
 
     private fun setupToolbar() {
+        // Setup the action bar with a back button
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true) // Back button
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         binding.toolbar.setNavigationOnClickListener { onBackPressed() }
     }
 
     private fun setupSwipeToRefresh() {
+        // Refresh comments when swipe-to-refresh is triggered
         binding.swipeRefreshLayout.setOnRefreshListener {
-            recipe?.let {
-                fetchComments(it.id)
+            viewModel.recipe.value?.let { recipe ->
+                viewModel.fetchComments(recipe.id)
+            }
+        }
+    }
+
+    private fun setupObservers() {
+        // Observe recipe LiveData and bind its details
+        viewModel.recipe.observe(this) { recipe ->
+            bindRecipeDetails(recipe)
+        }
+
+        // Observe comments LiveData and update the comments adapter
+        viewModel.comments.observe(this) { comments ->
+            commentsAdapter.submitList(comments)
+            binding.noCommentsTextView.visibility = if (comments.isEmpty()) View.VISIBLE else View.GONE
+        }
+
+        // Observe loading state and show/hide the loading indicator
+        viewModel.isLoading.observe(this) { isLoading ->
+            binding.swipeRefreshLayout.isRefreshing = isLoading
+        }
+
+        // Observe error messages and display them as Toast
+        viewModel.errorMessage.observe(this) { errorMessage ->
+            errorMessage?.let {
+                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun bindRecipeDetails(recipe: Recipe) {
+        // Bind recipe details to the UI
         lifecycleScope.launch {
-            val userName = FirestoreRepository().getUserNameById(recipe.userId) // Ambil nama user
+            val userName = FirestoreRepository().getUserNameById(recipe.userId)
             binding.recipeUserNameTextView.text = getString(R.string.recipe_created_by, userName)
         }
 
@@ -82,72 +114,39 @@ class RecipeDetailActivity : AppCompatActivity() {
         }.joinToString("\n\n")
         binding.instructionsTextView.text = formattedSteps
 
+        // Load recipe image using Glide
         Glide.with(this)
             .load(recipe.imageUrl)
             .into(binding.recipeImageView)
     }
 
     private fun setupCommentsSection() {
+        // Setup RecyclerView for comments
         binding.commentsRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.commentsRecyclerView.adapter = commentsAdapter
 
-        recipe?.let {
-            fetchComments(it.id)
-        }
-
+        // Add a new comment when the button is clicked
         binding.addCommentButton.setOnClickListener {
             val commentText = binding.commentEditText.text.toString().trim()
             if (commentText.isNotEmpty()) {
-                postComment(commentText)
+                val newComment = RecipeComment(
+                    recipeId = viewModel.recipe.value!!.id,
+                    userId = FirestoreRepository().getCurrentUserId() ?: return@setOnClickListener,
+                    userName = FirestoreRepository().getCurrentUserName(),
+                    text = commentText,
+                    timestamp = System.currentTimeMillis()
+                )
+                viewModel.addComment(newComment)
                 binding.commentEditText.text?.clear()
+                hideKeyboard()
             } else {
                 Toast.makeText(this, "Comment cannot be empty", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun fetchComments(recipeId: String) {
-        lifecycleScope.launch {
-            val result = firestoreRepository.getCommentsForRecipe(recipeId)
-            if (result.isSuccess) {
-                val comments = result.getOrDefault(emptyList())
-                commentsAdapter.submitList(comments)
-                binding.noCommentsTextView.visibility = if (comments.isEmpty()) View.VISIBLE else View.GONE
-            } else {
-                Toast.makeText(this@RecipeDetailActivity, "Failed to load comments", Toast.LENGTH_SHORT).show()
-            }
-            binding.swipeRefreshLayout.isRefreshing = false
-        }
-    }
-
-    private fun postComment(commentText: String) {
-        val userId = firestoreRepository.getCurrentUserId() ?: return
-        val userName = firestoreRepository.getCurrentUserName()
-
-        val newComment = RecipeComment(
-            recipeId = recipe!!.id,
-            userId = userId,
-            userName = userName,
-            text = commentText,
-            timestamp = System.currentTimeMillis()
-        )
-
-        lifecycleScope.launch {
-            val result = firestoreRepository.addCommentToRecipe(recipe!!.id, newComment)
-            if (result.isSuccess) {
-                Toast.makeText(this@RecipeDetailActivity, "Comment added", Toast.LENGTH_SHORT).show()
-                binding.commentEditText.text?.clear() // Bersihkan input field
-                binding.commentEditText.clearFocus() // Hilangkan fokus dari input
-                hideKeyboard() // Tutup keyboard
-                fetchComments(recipe!!.id)
-            } else {
-                Toast.makeText(this@RecipeDetailActivity, "Failed to add comment", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    // Helper method to hide the keyboard
     private fun hideKeyboard() {
+        // Hide the keyboard from the screen
         currentFocus?.let { view ->
             val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(view.windowToken, 0)
@@ -155,6 +154,7 @@ class RecipeDetailActivity : AppCompatActivity() {
     }
 
     private fun showPopupMenu(comment: RecipeComment, anchorView: View) {
+        // Show a popup menu for editing or deleting a comment
         val popupMenu = PopupMenu(this, anchorView)
         popupMenu.inflate(R.menu.comment_popup_menu)
         popupMenu.setOnMenuItemClickListener { menuItem ->
@@ -164,7 +164,7 @@ class RecipeDetailActivity : AppCompatActivity() {
                     true
                 }
                 R.id.action_delete -> {
-                    deleteComment(comment)
+                    viewModel.deleteComment(comment)
                     true
                 }
                 else -> false
@@ -174,6 +174,7 @@ class RecipeDetailActivity : AppCompatActivity() {
     }
 
     private fun showEditCommentDialog(comment: RecipeComment) {
+        // Show a dialog to edit the comment
         val editText = androidx.appcompat.widget.AppCompatEditText(this)
         editText.setText(comment.text)
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
@@ -182,43 +183,12 @@ class RecipeDetailActivity : AppCompatActivity() {
             .setPositiveButton("Save") { _, _ ->
                 val updatedText = editText.text.toString()
                 if (updatedText.isNotEmpty()) {
-                    updateComment(comment.copy(text = updatedText))
+                    viewModel.updateComment(comment.copy(text = updatedText))
                 } else {
                     Toast.makeText(this, "Comment cannot be empty", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun updateComment(comment: RecipeComment) {
-        lifecycleScope.launch {
-            val result = firestoreRepository.updateComment(comment)
-            if (result.isSuccess) {
-                fetchComments(comment.recipeId)
-                Toast.makeText(this@RecipeDetailActivity, "Comment updated", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@RecipeDetailActivity, "Failed to update comment", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun deleteComment(comment: RecipeComment) {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Delete Comment")
-            .setMessage("Are you sure you want to delete this comment?")
-            .setPositiveButton("Yes") { _, _ ->
-                lifecycleScope.launch {
-                    val result = firestoreRepository.deleteComment(comment)
-                    if (result.isSuccess) {
-                        fetchComments(comment.recipeId)
-                        Toast.makeText(this@RecipeDetailActivity, "Comment deleted", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this@RecipeDetailActivity, "Failed to delete comment", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            .setNegativeButton("No", null)
             .show()
     }
 }

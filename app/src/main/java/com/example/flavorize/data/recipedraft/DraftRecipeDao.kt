@@ -8,7 +8,7 @@ interface DraftRecipeDao {
     suspend fun insertDraft(draft: DraftRecipe)
 
     @Query("SELECT * FROM draft_recipes WHERE userId = :userId")
-    suspend fun getDraftsByUser(userId: String): List<DraftRecipe> // Hanya ambil draft milik user tertentu
+    suspend fun getDraftsByUser(userId: String): List<DraftRecipe>
 
     @Delete
     suspend fun deleteDraft(draft: DraftRecipe)

@@ -42,16 +42,17 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         binding = ActivityCreateRecipeFormBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupToolbar()
-        setupUI()
-        observeViewModel()
+        setupToolbar() // Setup toolbar
+        setupUI() // Setup UI components
+        observeViewModel() // Observe ViewModel LiveData
 
-        // Ambil data draft dari intent
+        // Populate the form with a draft recipe if provided
         val draft = intent.getParcelableExtra<DraftRecipe>("draft")
         draft?.let { populateFormWithDraft(it) }
     }
 
     private fun setupToolbar() {
+        // Configure the toolbar
         setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
@@ -65,6 +66,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
+        // Handle form submission
         binding.submitRecipeButton.setOnClickListener {
             if (!isSubmitClicked) {
                 isSubmitClicked = true
@@ -72,6 +74,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             }
         }
 
+        // Handle saving as draft
         binding.draftRecipeButton.setOnClickListener {
             if (!isDraftClicked) {
                 isDraftClicked = true
@@ -79,6 +82,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             }
         }
 
+        // Add dynamic ingredient fields
         val addIngredientButton = binding.addIngredientButton
         val recipeIngredientsLayout = binding.recipeIngredientsLayout
 
@@ -92,6 +96,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             recipeIngredientsLayout.addView(ingredientEditText)
         }
 
+        // Add dynamic instruction fields
         val addInstructionButton = binding.addInstructionButton
         val recipeInstructionsLayout = binding.recipeInstructionsLayout
 
@@ -105,6 +110,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             recipeInstructionsLayout.addView(instructionEditText)
         }
 
+        // Handle recipe image selection
         val recipeImageView = binding.recipeImageView
         recipeImageView.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -113,6 +119,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     }
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        // Handle image selection result
         if (result.resultCode == Activity.RESULT_OK) {
             imageUri = result.data?.data
             binding.recipeImageView.setImageURI(imageUri)
@@ -120,52 +127,51 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
+        // Observe the result of adding a recipe
         viewModel.addRecipeResult.observe(this) { result ->
             if (result.isSuccess) {
                 Toast.makeText(this, "Recipe added successfully", Toast.LENGTH_SHORT).show()
                 finish()
             } else {
-                isSubmitClicked = false // Allow user to retry if there is a failure
+                isSubmitClicked = false // Allow retry on failure
                 Toast.makeText(this, "Failed to add recipe: ${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun handlePostRecipe() {
+        // Handle recipe posting logic
         val recipe = getCurrentRecipe()
         if (recipe != null) {
             uploadImageAndSaveRecipe(recipe)
         } else {
-            isSubmitClicked = false // Reset state if validation fails
+            isSubmitClicked = false // Reset if validation fails
             Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun handleSaveDraft() {
-        // Ambil draft awal
+        // Handle saving the recipe as a draft
         val originalRecipe = getCurrentDraftRecipe()
-        val userId = FirebaseAuth.getInstance().currentUser?.uid // Ambil userId
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-        if (originalRecipe != null && userId != null) { // Tambahkan validasi userId
-            // Simpan URI gambar ke cache (jika ada gambar)
+        if (originalRecipe != null && userId != null) {
             val cachedImageUri = imageUri?.let { uri -> saveImageToCache(uri) }
-
-            // Buat salinan draft dengan userId dan URI gambar baru
             val updatedRecipe = originalRecipe.copy(userId = userId, imageUri = cachedImageUri)
 
             lifecycleScope.launch {
-                // Simpan draft yang diperbarui ke database
                 draftDao.insertDraft(updatedRecipe)
                 Toast.makeText(this@CreateRecipeFormActivity, "Recipe saved as draft", Toast.LENGTH_SHORT).show()
                 finish()
             }
         } else {
-            isDraftClicked = false // Reset state jika validasi gagal
+            isDraftClicked = false // Reset if validation fails
             Toast.makeText(this, "Please complete all fields or login", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun saveImageToCache(uri: Uri): String? {
+        // Save selected image to the cache directory
         return try {
             val inputStream = contentResolver.openInputStream(uri)
             val file = File(cacheDir, "${UUID.randomUUID()}.jpg")
@@ -181,6 +187,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     }
 
     private fun uploadImageAndSaveRecipe(recipe: Recipe) {
+        // Upload the image and save the recipe
         imageUri?.let { uri ->
             val inputStream: InputStream? = contentResolver.openInputStream(uri)
             inputStream?.let {
@@ -218,6 +225,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     }
 
     private fun getCurrentRecipe(): Recipe? {
+        // Get the current recipe data from the form
         val name = binding.recipeNameEditText.text.toString()
         val description = binding.recipeDescriptionEditText.text.toString()
         val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
@@ -259,6 +267,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
     }
 
     private fun getCurrentDraftRecipe(): DraftRecipe? {
+        // Get the current draft recipe data from the form
         val name = binding.recipeNameEditText.text.toString()
         val description = binding.recipeDescriptionEditText.text.toString()
         val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
@@ -289,7 +298,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
 
         return if (name.isNotBlank() && description.isNotBlank()) {
             DraftRecipe(
-                userId = userId, // Tambahkan userId
+                userId = userId,
                 name = name,
                 description = description,
                 servings = servings,
@@ -301,8 +310,8 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         } else null
     }
 
-    // Metode untuk mengisi form
     private fun populateFormWithDraft(draft: DraftRecipe) {
+        // Populate the form fields with the draft data
         binding.recipeNameEditText.setText(draft.name)
         binding.recipeDescriptionEditText.setText(draft.description)
         binding.recipePortionsEditText.setText(draft.servings.toString())
@@ -342,6 +351,6 @@ class CreateRecipeFormActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        uploadJob?.cancel()
+        uploadJob?.cancel() // Cancel any ongoing upload job
     }
 }

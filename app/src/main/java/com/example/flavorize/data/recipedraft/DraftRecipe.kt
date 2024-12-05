@@ -16,5 +16,5 @@ data class DraftRecipe(
     val cookingTime: Int,
     val ingredients: List<String>,
     val instructions: List<String>,
-    val imageUri: String? = null // URI gambar lokal
+    val imageUri: String? = null
 ) : Parcelable

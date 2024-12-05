@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Flavorize">
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.activities.settings.SettingsActivity"
             android:exported="false" />
         <activity
             android:name=".ui.activities.bookmark.BookmarkedRecipesActivity"
@@ -30,13 +30,13 @@
             android:name=".ui.activities.profile.ProfileActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.activities.createform.draft.DraftedRecipesActivity"
+            android:name=".ui.activities.draft.DraftedRecipesActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.auth.LoginActivity"
+            android:name=".ui.activities.auth.LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.activities.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

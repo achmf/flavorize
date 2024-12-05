@@ -22,32 +22,20 @@ class FirestoreRepository {
     private val recipesCollection = firestore.collection("recipes")
     private val usersCollection = firestore.collection("users")
     private val commentsCollection = firestore.collection("comments") // Koleksi "comments"
-    val auth = FirebaseAuth.getInstance()
+    private val auth = FirebaseAuth.getInstance()
     private val bookmarkListeners = mutableMapOf<String, ListenerRegistration>()
 
-    fun stopListeningForBookmarkChanges() {
-        bookmarkListeners.forEach { (_, registration) ->
-            registration.remove()
-        }
-        bookmarkListeners.clear()
-    }
+    // User Authentication
+    fun getCurrentUserId(): String? = auth.currentUser?.uid
+    fun getCurrentUserName(): String = auth.currentUser?.displayName ?: "Anonymous"
 
-
-    fun listenForBookmarkChanges(userId: String, onBookmarksChanged: (Set<String>) -> Unit) {
-        val bookmarksRef = firestore.collection("users").document(userId).collection("bookmarks")
-        val listener = bookmarksRef.addSnapshotListener { snapshot, error ->
-            if (error != null || snapshot == null) return@addSnapshotListener
-            val bookmarkIds = snapshot.documents.mapNotNull { it.id }.toSet()
-            onBookmarksChanged(bookmarkIds)
-        }
-        bookmarkListeners[userId] = listener
-    }
-
-
-    // Function to add a new recipe to Firestore
+    // Recipe Management
     suspend fun addRecipe(recipe: Recipe): Result<Void?> {
         return try {
-            val userId = auth.currentUser?.uid ?: throw FirebaseFirestoreException("User not authenticated", FirebaseFirestoreException.Code.PERMISSION_DENIED)
+            val userId = auth.currentUser?.uid ?: throw FirebaseFirestoreException(
+                "User not authenticated",
+                FirebaseFirestoreException.Code.PERMISSION_DENIED
+            )
             val recipeWithUserId = recipe.copy(id = UUID.randomUUID().toString(), userId = userId)
             recipesCollection.document(recipeWithUserId.id).set(recipeWithUserId).await()
             Result.success(null)
@@ -56,7 +44,6 @@ class FirestoreRepository {
         }
     }
 
-    // Function to delete a recipe by ID
     suspend fun deleteRecipe(recipeId: String): Result<Void?> {
         return try {
             recipesCollection.document(recipeId).delete().await()
@@ -66,7 +53,6 @@ class FirestoreRepository {
         }
     }
 
-    // Function to update a recipe
     suspend fun updateRecipe(recipeId: String, updatedRecipe: Recipe): Result<Void?> {
         return try {
             recipesCollection.document(recipeId).set(updatedRecipe).await()
@@ -76,7 +62,31 @@ class FirestoreRepository {
         }
     }
 
-    // Function to get a user's name by ID
+    fun getPagedRecipes(): Flow<PagingData<Recipe>> {
+        return Pager(
+            config = PagingConfig(pageSize = 10, enablePlaceholders = false),
+            pagingSourceFactory = { RecipesPagingSource(firestore) }
+        ).flow.map { pagingData ->
+            pagingData.map { recipe ->
+                val userName = getUserNameById(recipe.userId)
+                recipe.copy(userName = userName)
+            }
+        }
+    }
+
+    fun getPagedMyRecipes(userId: String): Flow<PagingData<Recipe>> {
+        return Pager(
+            config = PagingConfig(pageSize = 10, enablePlaceholders = false),
+            pagingSourceFactory = { MyRecipesPagingSource(firestore, userId) }
+        ).flow.map { pagingData ->
+            pagingData.map { recipe ->
+                val userName = getUserNameById(recipe.userId)
+                recipe.copy(userName = userName)
+            }
+        }
+    }
+
+    // User Management
     suspend fun getUserNameById(userId: String): String {
         return try {
             val userDocument = usersCollection.document(userId).get().await()
@@ -86,17 +96,27 @@ class FirestoreRepository {
         }
     }
 
+    // Bookmark Management
     suspend fun addBookmark(userId: String, recipeId: String): Result<Void?> {
         return try {
-            // Tambahkan recipeId ke daftar bookmarks pengguna
             firestore.collection("users").document(userId).collection("bookmarks")
                 .document(recipeId)
                 .set(mapOf("recipeId" to recipeId)).await()
-
-            // Tambahkan userId ke bookmarkedBy pada recipe
-            firestore.collection("recipes").document(recipeId)
+            recipesCollection.document(recipeId)
                 .update("bookmarkedBy", FieldValue.arrayUnion(userId)).await()
+            Result.success(null)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
+    suspend fun removeBookmark(userId: String, recipeId: String): Result<Void?> {
+        return try {
+            firestore.collection("users").document(userId).collection("bookmarks")
+                .document(recipeId)
+                .delete().await()
+            recipesCollection.document(recipeId)
+                .update("bookmarkedBy", FieldValue.arrayRemove(userId)).await()
             Result.success(null)
         } catch (e: Exception) {
             Result.failure(e)
@@ -113,7 +133,7 @@ class FirestoreRepository {
 
             val bookmarkedRecipes = bookmarksSnapshot.documents.mapNotNull { doc ->
                 val recipeId = doc.id
-                firestore.collection("recipes").document(recipeId).get().await().toObject(Recipe::class.java)
+                recipesCollection.document(recipeId).get().await().toObject(Recipe::class.java)
             }
 
             Result.success(bookmarkedRecipes)
@@ -122,23 +142,24 @@ class FirestoreRepository {
         }
     }
 
-    suspend fun removeBookmark(userId: String, recipeId: String): Result<Void?> {
-        return try {
-            // Hapus recipeId dari daftar bookmarks pengguna
-            firestore.collection("users").document(userId).collection("bookmarks")
-                .document(recipeId)
-                .delete().await()
-
-            // Hapus userId dari bookmarkedBy pada recipe
-            firestore.collection("recipes").document(recipeId)
-                .update("bookmarkedBy", FieldValue.arrayRemove(userId)).await()
-
-            Result.success(null)
-        } catch (e: Exception) {
-            Result.failure(e)
+    fun listenForBookmarkChanges(userId: String, onBookmarksChanged: (Set<String>) -> Unit) {
+        val bookmarksRef = firestore.collection("users").document(userId).collection("bookmarks")
+        val listener = bookmarksRef.addSnapshotListener { snapshot, error ->
+            if (error != null || snapshot == null) return@addSnapshotListener
+            val bookmarkIds = snapshot.documents.mapNotNull { it.id }.toSet()
+            onBookmarksChanged(bookmarkIds)
         }
+        bookmarkListeners[userId] = listener
     }
 
+    fun stopListeningForBookmarkChanges() {
+        bookmarkListeners.forEach { (_, registration) ->
+            registration.remove()
+        }
+        bookmarkListeners.clear()
+    }
+
+    // Comments Management
     suspend fun getCommentsForRecipe(recipeId: String): Result<List<RecipeComment>> {
         return try {
             val snapshot = commentsCollection.whereEqualTo("recipeId", recipeId).get().await()
@@ -149,10 +170,9 @@ class FirestoreRepository {
         }
     }
 
-    // Menambahkan komentar ke koleksi `comments`
     suspend fun addCommentToRecipe(recipeId: String, comment: RecipeComment): Result<Void?> {
         return try {
-            val commentWithRecipeId = comment.copy(recipeId = recipeId) // Tambahkan recipeId ke komentar
+            val commentWithRecipeId = comment.copy(recipeId = recipeId)
             commentsCollection.document().set(commentWithRecipeId).await()
             Result.success(null)
         } catch (e: Exception) {
@@ -192,45 +212,4 @@ class FirestoreRepository {
             Result.failure(e)
         }
     }
-
-    // Mendapatkan userId saat ini
-    fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid
-    }
-
-    // Mendapatkan nama user saat ini
-    fun getCurrentUserName(): String {
-        return auth.currentUser?.displayName ?: "Anonymous"
-    }
-
-    fun getPagedRecipes(): Flow<PagingData<Recipe>> {
-        return Pager(
-            config = PagingConfig(
-                pageSize = 10,
-                enablePlaceholders = false
-            ),
-            pagingSourceFactory = { RecipesPagingSource(firestore) }
-        ).flow.map { pagingData ->
-            pagingData.map { recipe ->
-                val userName = getUserNameById(recipe.userId) // Ambil nama user
-                recipe.copy(userName = userName)
-            }
-        }
-    }
-
-    fun getPagedMyRecipes(userId: String): Flow<PagingData<Recipe>> {
-        return Pager(
-            config = PagingConfig(
-                pageSize = 10,
-                enablePlaceholders = false
-            ),
-            pagingSourceFactory = { MyRecipesPagingSource(firestore, userId) }
-        ).flow.map { pagingData ->
-            pagingData.map { recipe ->
-                val userName = getUserNameById(recipe.userId) // Ambil nama user
-                recipe.copy(userName = userName)
-            }
-        }
-    }
-
 }
