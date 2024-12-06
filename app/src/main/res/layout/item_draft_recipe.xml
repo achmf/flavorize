@@ -19,14 +19,14 @@
             android:layout_height="wrap_content"
             android:textStyle="bold"
             android:textSize="16sp"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnPrimary" />
 
         <TextView
             android:id="@+id/draftDescriptionTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="?attr/colorOnSecondary"
             android:layout_marginTop="4dp" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

@@ -105,12 +105,12 @@ class RecipeDetailActivity : AppCompatActivity() {
         binding.recipeCookingTimeTextView.text = getString(R.string.recipe_cooking_time, recipe.cookingTime)
 
         val formattedIngredients = recipe.ingredients.mapIndexed { index, ingredient ->
-            "${index + 1}. $ingredient"
+            "${index + 1}) $ingredient"
         }.joinToString("\n\n")
         binding.ingredientsTextView.text = formattedIngredients
 
         val formattedSteps = recipe.instructions.mapIndexed { index, step ->
-            "${index + 1}. $step"
+            "${index + 1}) $step"
         }.joinToString("\n\n")
         binding.instructionsTextView.text = formattedSteps
 

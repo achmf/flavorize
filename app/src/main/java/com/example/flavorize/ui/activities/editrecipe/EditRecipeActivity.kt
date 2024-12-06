@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -99,8 +100,10 @@ class EditRecipeActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setText(ingredient)
+            setText(ingredient.trim()) // Trim whitespace or newline
             hint = "Ingredient"
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            setSingleLine(true)
         }
         val addButtonIndex = binding.recipeIngredientsLayout.indexOfChild(binding.addIngredientButton)
         binding.recipeIngredientsLayout.addView(ingredientEditText, addButtonIndex)
@@ -113,8 +116,10 @@ class EditRecipeActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setText(instruction)
+            setText(instruction.trim()) // Trim whitespace or newline
             hint = "Instruction"
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            setSingleLine(true)
         }
         val addButtonIndex = binding.recipeInstructionsLayout.indexOfChild(binding.addInstructionButton)
         binding.recipeInstructionsLayout.addView(instructionEditText, addButtonIndex)
@@ -122,26 +127,32 @@ class EditRecipeActivity : AppCompatActivity() {
 
     private fun getUpdatedRecipe(): Recipe? {
         // Extract updated recipe details from the form
-        val name = binding.recipeNameEditText.text.toString()
-        val description = binding.recipeDescriptionEditText.text.toString()
+        val name = binding.recipeNameEditText.text.toString().trim()
+        val description = binding.recipeDescriptionEditText.text.toString().trim()
         val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
-        val cookingTime = binding.recipeCookingTimeEditText.text.toString()
+        val cookingTime = binding.recipeCookingTimeEditText.text.toString().trim()
 
+        // Clean and filter ingredients
         val ingredients = mutableListOf<String>()
         for (i in 0 until binding.recipeIngredientsLayout.childCount) {
             val view = binding.recipeIngredientsLayout.getChildAt(i)
             if (view is EditText) {
-                val ingredient = view.text.toString()
-                if (ingredient.isNotBlank()) ingredients.add(ingredient)
+                val ingredient = view.text.toString().trim()
+                if (ingredient.isNotBlank()) { // Only add non-blank ingredients
+                    ingredients.add(ingredient)
+                }
             }
         }
 
+        // Clean and filter instructions
         val instructions = mutableListOf<String>()
         for (i in 0 until binding.recipeInstructionsLayout.childCount) {
             val view = binding.recipeInstructionsLayout.getChildAt(i)
             if (view is EditText) {
-                val instruction = view.text.toString()
-                if (instruction.isNotBlank()) instructions.add(instruction)
+                val instruction = view.text.toString().trim()
+                if (instruction.isNotBlank()) { // Only add non-blank instructions
+                    instructions.add(instruction)
+                }
             }
         }
 
@@ -177,17 +188,18 @@ class EditRecipeActivity : AppCompatActivity() {
 
     private fun populateUI(recipe: Recipe) {
         // Populate form with recipe details
-        binding.recipeNameEditText.setText(recipe.name)
-        binding.recipeDescriptionEditText.setText(recipe.description)
+        binding.recipeNameEditText.setText(recipe.name.trim())
+        binding.recipeDescriptionEditText.setText(recipe.description.trim())
         binding.recipePortionsEditText.setText(recipe.servings.toString())
-        binding.recipeCookingTimeEditText.setText(recipe.cookingTime)
+        binding.recipeCookingTimeEditText.setText(recipe.cookingTime.trim())
 
+        // Populate ingredients and instructions
         recipe.ingredients.forEach { ingredient ->
-            addIngredientField(ingredient)
+            addIngredientField(ingredient.trim())
         }
 
         recipe.instructions.forEach { instruction ->
-            addInstructionField(instruction)
+            addInstructionField(instruction.trim())
         }
 
         Glide.with(this)

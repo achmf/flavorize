@@ -40,13 +40,4 @@ class ProfileActivityViewModel : ViewModel() {
     fun logout() {
         auth.signOut()
     }
-
-    // Delete the current user account
-    fun deleteAccount() {
-        auth.currentUser?.let { user ->
-            user.delete().addOnCompleteListener { task ->
-                _isDeleted.value = task.isSuccessful
-            }
-        }
-    }
 }

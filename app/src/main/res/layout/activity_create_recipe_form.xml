@@ -34,7 +34,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Recipe Name"
-                android:minHeight="48dp" />
+                android:minHeight="48dp"
+                android:imeOptions="actionDone"
+                android:singleLine="true" />
 
             <EditText
                 android:id="@+id/recipeDescriptionEditText"
@@ -42,7 +44,9 @@
                 android:layout_height="150dp"
                 android:inputType="textMultiLine"
                 android:gravity="top"
-                android:hint="Recipe Description" />
+                android:hint="Recipe Description"
+                android:imeOptions="actionDone"
+                android:singleLine="true" />
 
             <EditText
                 android:id="@+id/recipePortionsEditText"
@@ -50,7 +54,9 @@
                 android:layout_height="wrap_content"
                 android:hint="Portions"
                 android:inputType="number"
-                android:minHeight="48dp" />
+                android:minHeight="48dp"
+                android:imeOptions="actionDone"
+                android:singleLine="true" />
 
             <EditText
                 android:id="@+id/recipeCookingTimeEditText"
@@ -58,7 +64,9 @@
                 android:layout_height="wrap_content"
                 android:hint="Cooking Time (minutes)"
                 android:inputType="number"
-                android:minHeight="48dp" />
+                android:minHeight="48dp"
+                android:imeOptions="actionDone"
+                android:singleLine="true" />
 
             <ImageView
                 android:id="@+id/recipeImageView"
@@ -86,6 +94,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/brand_orange"
+                    android:textColor="@color/white"
                     android:text="+ Add"
                     android:layout_marginTop="8dp" />
             </LinearLayout>
@@ -107,6 +116,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/brand_orange"
+                    android:textColor="@color/white"
                     android:text="+ Add"
                     android:layout_marginTop="8dp" />
             </LinearLayout>
@@ -116,6 +126,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/brand_orange"
+                android:textColor="@color/white"
                 android:text="Submit Recipe"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp" />
@@ -125,6 +136,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/brand_orange"
+                android:textColor="@color/white"
                 android:text="Save as Draft"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp" />

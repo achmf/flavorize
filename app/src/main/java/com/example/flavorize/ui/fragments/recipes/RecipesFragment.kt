@@ -25,13 +25,17 @@ class RecipesFragment : Fragment() {
     private var _binding: FragmentRecipesBinding? = null
     private val binding get() = _binding!!
 
+    // ViewModel for managing recipes data and bookmark state
     private val recipesViewModel: RecipesFragmentViewModel by viewModels()
+
+    // Adapter for paginated recipe data
     private lateinit var recipesPagingAdapter: RecipesPagingAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        // Inflate the layout for this fragment
         _binding = FragmentRecipesBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -39,10 +43,16 @@ class RecipesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Setup RecyclerView for displaying recipes
         setupRecyclerView()
+
+        // Setup listeners for UI interactions
         setupListeners()
+
+        // Observe ViewModel for errors and other updates
         observeViewModel()
 
+        // Collect paginated recipes and submit them to the adapter
         lifecycleScope.launch {
             recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
                 recipesPagingAdapter.submitData(pagingData)
@@ -54,10 +64,12 @@ class RecipesFragment : Fragment() {
         super.onResume()
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (userId != null) {
+            // Start listening for bookmark updates
             recipesViewModel.startListeningForBookmarkChanges(userId)
             recipesViewModel.bookmarkUpdates.observe(viewLifecycleOwner) { updatedBookmarks ->
                 lifecycleScope.launch {
                     recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
+                        // Update bookmark status locally
                         val updatedData = pagingData.map { recipe ->
                             recipe.copy(isBookmarked = updatedBookmarks.contains(recipe.id))
                         }
@@ -66,18 +78,22 @@ class RecipesFragment : Fragment() {
                 }
             }
         } else {
+            // Show message if user is not logged in
             Toast.makeText(requireContext(), "Please log in to see bookmarks", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onPause() {
         super.onPause()
+        // Stop listening for bookmark updates
         recipesViewModel.stopListeningForBookmarkChanges()
     }
 
     private fun setupRecyclerView() {
+        // Initialize the adapter with bookmark toggle callback
         recipesPagingAdapter = RecipesPagingAdapter { recipe, isBookmarking, onComplete ->
             recipesViewModel.toggleBookmark(recipe, isBookmarking, {
+                // Show success message
                 onComplete(true)
                 Toast.makeText(
                     requireContext(),
@@ -85,23 +101,27 @@ class RecipesFragment : Fragment() {
                     Toast.LENGTH_SHORT
                 ).show()
             }, { error ->
+                // Show error message on failure
                 onComplete(false)
                 Toast.makeText(requireContext(), "Error: $error", Toast.LENGTH_SHORT).show()
             })
         }
 
+        // Set layout manager and adapter for RecyclerView
         val gridLayoutManager = GridLayoutManager(requireContext(), 2)
         binding.recipesRecyclerView.layoutManager = gridLayoutManager
         binding.recipesRecyclerView.adapter = recipesPagingAdapter
     }
 
     private fun setupListeners() {
+        // Handle the create recipe button click
         binding.createRecipeButton.setOnClickListener {
             startActivity(Intent(requireContext(), CreateRecipeFormActivity::class.java))
         }
     }
 
     private fun observeViewModel() {
+        // Observe errors from the ViewModel
         recipesViewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             errorMessage?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
@@ -112,8 +132,10 @@ class RecipesFragment : Fragment() {
     fun performSearch(query: String?) {
         query?.let {
             lifecycleScope.launch {
+                // Clear current data before performing search
                 recipesPagingAdapter.submitData(PagingData.empty())
                 recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
+                    // Filter recipes based on search query
                     val filteredPagingData = pagingData.filter { recipe ->
                         recipe.name.contains(query, ignoreCase = true) ||
                                 recipe.description.contains(query, ignoreCase = true)
@@ -126,6 +148,7 @@ class RecipesFragment : Fragment() {
 
     fun resetSearch() {
         lifecycleScope.launch {
+            // Reset search and show all recipes
             recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
                 recipesPagingAdapter.submitData(pagingData)
             }
@@ -134,6 +157,7 @@ class RecipesFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Clean up binding when the view is destroyed
         _binding = null
     }
 }

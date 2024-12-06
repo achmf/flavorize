@@ -5,11 +5,12 @@
     android:layout_height="match_parent">
 
     <!-- Image Carousel -->
-    <ImageView
+    <ImageSwitcher
         android:id="@+id/imageCarousel"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:scaleType="centerCrop"
+        android:inAnimation="@android:anim/fade_in"
+        android:outAnimation="@android:anim/fade_out"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

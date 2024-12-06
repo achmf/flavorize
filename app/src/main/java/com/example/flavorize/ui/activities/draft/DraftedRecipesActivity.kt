@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.flavorize.data.recipedraft.DraftRecipe
 import com.example.flavorize.data.recipedraft.DraftRecipeDatabase
 import com.example.flavorize.databinding.ActivityDraftedRecipesBinding
+import com.example.flavorize.databinding.DialogConfirmDraftDeleteBinding
+import com.example.flavorize.databinding.DialogDraftOptionsBinding
 import com.example.flavorize.ui.activities.createform.CreateRecipeFormActivity
 import com.example.flavorize.ui.activities.draft.viewmodel.DraftedRecipesViewModel
 import com.example.flavorize.ui.activities.draft.viewmodel.DraftedRecipesViewModelFactory
@@ -82,17 +84,28 @@ class DraftedRecipesActivity : AppCompatActivity() {
     }
 
     private fun showDraftOptionsDialog(draft: DraftRecipe) {
-        // Show dialog with options to open or delete draft
-        val options = arrayOf("Open Draft", "Delete Draft")
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Choose an Option")
-        builder.setItems(options) { _, which ->
-            when (which) {
-                0 -> navigateToCreateRecipe(draft) // Open draft
-                1 -> deleteDraft(draft) // Delete draft
-            }
+        // Inflate custom view with ViewBinding
+        val dialogBinding = DialogDraftOptionsBinding.inflate(layoutInflater)
+
+        // Create the AlertDialog instance
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
+
+        // Set click listeners for buttons
+        dialogBinding.openDraftButton.setOnClickListener {
+            navigateToCreateRecipe(draft) // Open draft
+            dialog.dismiss() // Dismiss dialog after action
         }
-        builder.show()
+
+        dialogBinding.deleteDraftButton.setOnClickListener {
+            deleteDraft(draft) // Delete draft
+            dialog.dismiss() // Dismiss dialog after action
+        }
+
+        // Apply rounded corners to the dialog
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
     }
 
     private fun navigateToCreateRecipe(draft: DraftRecipe) {
@@ -104,10 +117,34 @@ class DraftedRecipesActivity : AppCompatActivity() {
     }
 
     private fun deleteDraft(draft: DraftRecipe) {
-        // Delete the draft and refresh the list
-        viewModel.deleteDraft(draft) {
-            Toast.makeText(this, "Draft deleted", Toast.LENGTH_SHORT).show()
-            loadDrafts()
+        // Inflate custom view with ViewBinding
+        val dialogBinding = DialogConfirmDraftDeleteBinding.inflate(layoutInflater)
+
+        // Create the AlertDialog instance
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
+
+        // Set dialog texts dynamically (if needed)
+        dialogBinding.confirmDialogTitle.text
+        dialogBinding.confirmDialogMessage.text
+
+        // Set click listeners for buttons
+        dialogBinding.cancelButton.setOnClickListener {
+            dialog.dismiss() // Dismiss dialog if user cancels
         }
+
+        dialogBinding.confirmButton.setOnClickListener {
+            // Proceed with deletion
+            viewModel.deleteDraft(draft) {
+                Toast.makeText(this, "Draft deleted", Toast.LENGTH_SHORT).show()
+                loadDrafts() // Refresh the drafts list
+            }
+            dialog.dismiss() // Dismiss dialog after confirmation
+        }
+
+        // Apply rounded corners to the dialog
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
     }
 }
