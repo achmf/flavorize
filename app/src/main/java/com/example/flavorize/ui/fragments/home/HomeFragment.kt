@@ -1,31 +1,30 @@
 package com.example.flavorize.ui.fragments.home
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
-import androidx.navigation.findNavController
-import com.example.flavorize.R
+import androidx.fragment.app.viewModels
 import com.example.flavorize.databinding.FragmentHomeBinding
+import com.example.flavorize.ui.fragments.home.viewmodel.HomeFragmentViewModel
 
 class HomeFragment : Fragment() {
+
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    private val images = listOf(
-        R.drawable.image1,
-        R.drawable.image2,
-        R.drawable.image3,
-        R.drawable.image4,
-        R.drawable.image5
-    )
-    private var currentImageIndex = 0
+    // ViewModel instance
+    private val viewModel: HomeFragmentViewModel by viewModels()
 
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
     private val imageSwitcherRunnable = object : Runnable {
         override fun run() {
-            updateImage()
+            viewModel.updateCurrentImageIndex() // Update image index using ViewModel
             handler.postDelayed(this, 5000) // Switch image every 5 seconds
         }
     }
@@ -42,39 +41,52 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupImageSwitcher()
-        setupDynamicInfoContent()
+        observeViewModel()
     }
 
     private fun setupImageSwitcher() {
-        handler.post(imageSwitcherRunnable) // Start image switching
+        binding.imageCarousel.setFactory {
+            val imageView = ImageView(context).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+                scaleType = ImageView.ScaleType.CENTER_CROP
+            }
+            imageView
+        }
+
+        // Start the image switching animation
+        handler.post(imageSwitcherRunnable)
     }
 
-    private fun updateImage() {
-        currentImageIndex = (currentImageIndex + 1) % images.size
-        binding.imageCarousel.setImageResource(images[currentImageIndex])
+    private fun observeViewModel() {
+        // Observe images LiveData and set the first image
+        viewModel.images.observe(viewLifecycleOwner) { images ->
+            if (images.isNotEmpty()) {
+                binding.imageCarousel.setImageResource(
+                    images[viewModel.currentImageIndex.value ?: 0]
+                )
+            }
+        }
+
+        // Observe the current image index and update the ImageSwitcher
+        viewModel.currentImageIndex.observe(viewLifecycleOwner) { index ->
+            val images = viewModel.images.value ?: emptyList()
+            if (images.isNotEmpty()) {
+                binding.imageCarousel.setImageResource(images[index])
+            }
+        }
+
+        // Observe dynamic info content and update the TextView
+        viewModel.dynamicInfoContent.observe(viewLifecycleOwner) { content ->
+            binding.infoContent.text = content
+        }
     }
-
-    private fun setupDynamicInfoContent() {
-        // Example dynamic content
-        val dynamicFeatures = listOf(
-            "• Discover thousands of curated recipes.",
-            "• Share your favorite recipes with the community.",
-            "• Save your favorite recipes in bookmarks.",
-            "• Get inspired with daily cooking ideas.",
-            "• Easy-to-use app for all food enthusiasts."
-        )
-
-        // Combine the list into a single string with newlines
-        val dynamicContent = dynamicFeatures.joinToString("\n")
-
-        // Set the dynamic content to the TextView
-        binding.infoContent.text = dynamicContent
-    }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        handler.removeCallbacks(imageSwitcherRunnable) // Stop handler when the fragment is destroyed
+        handler.removeCallbacks(imageSwitcherRunnable) // Stop the handler when the fragment is destroyed
     }
 }

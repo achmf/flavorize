@@ -20,6 +20,7 @@ import java.util.UUID
 class FirestoreRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val recipesCollection = firestore.collection("recipes")
+    private var recipeChangeListener: ListenerRegistration? = null
     private val usersCollection = firestore.collection("users")
     private val commentsCollection = firestore.collection("comments") // Koleksi "comments"
     private val auth = FirebaseAuth.getInstance()
@@ -84,6 +85,24 @@ class FirestoreRepository {
                 recipe.copy(userName = userName)
             }
         }
+    }
+
+    fun listenForRecipeChanges(userId: String, onUpdate: (List<Recipe>) -> Unit) {
+        val query = firestore.collection("recipes").whereEqualTo("userId", userId)
+        recipeChangeListener = query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                return@addSnapshotListener
+            }
+            snapshot?.let {
+                val recipes = it.toObjects(Recipe::class.java)
+                onUpdate(recipes)
+            }
+        }
+    }
+
+    fun stopListeningForRecipeChanges() {
+        recipeChangeListener?.remove()
+        recipeChangeListener = null
     }
 
     // User Management

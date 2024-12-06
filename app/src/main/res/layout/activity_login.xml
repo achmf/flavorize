@@ -1,19 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.activities.auth.LoginActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="?attr/colorPrimary"
+    tools:context=".ui.activities.auth.LoginActivity"
+    android:padding="16dp">
 
-    <Button
-        android:id="@+id/loginButton"
+    <!-- App Logo -->
+    <ImageView
+        android:id="@+id/appLogoImageView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/splash_foreground"
+        android:contentDescription="App Logo" />
+
+    <!-- Welcome Text -->
+    <TextView
+        android:id="@+id/welcomeTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Log In with Google"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:text="Login to Flavorize"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnPrimary"
+        android:layout_marginBottom="24dp"
+        android:gravity="center" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Login Button with Google -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/loginButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="?attr/colorPrimary"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="2dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:backgroundTint="?attr/colorPrimary"
+            android:gravity="center">
+
+            <!-- Google Icon -->
+            <ImageView
+                android:id="@+id/googleIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/google_foreground"
+                android:contentDescription="Google Icon"
+                android:layout_marginEnd="8dp" />
+
+            <!-- Button Text -->
+            <TextView
+                android:id="@+id/loginButtonText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Login with Google"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

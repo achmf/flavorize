@@ -53,7 +53,10 @@ android {
 }
 
 dependencies {
-    // MaterialDesign 3
+    // Splash Screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
+    // MaterialDesign
     implementation(libs.material)
 
     // Glide

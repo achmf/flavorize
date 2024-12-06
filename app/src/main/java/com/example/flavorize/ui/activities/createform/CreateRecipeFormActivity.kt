@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -82,32 +83,42 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             }
         }
 
-        // Add dynamic ingredient fields
+        // Add dynamic ingredient fields above the button
         val addIngredientButton = binding.addIngredientButton
         val recipeIngredientsLayout = binding.recipeIngredientsLayout
 
         addIngredientButton.setOnClickListener {
-            val ingredientEditText = EditText(this)
-            ingredientEditText.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            ingredientEditText.hint = "Ingredient"
-            recipeIngredientsLayout.addView(ingredientEditText)
+            val ingredientEditText = EditText(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                hint = "Ingredient"
+                imeOptions = EditorInfo.IME_ACTION_DONE
+                setSingleLine(true)
+            }
+            // Add the EditText above the button
+            val buttonIndex = recipeIngredientsLayout.indexOfChild(addIngredientButton)
+            recipeIngredientsLayout.addView(ingredientEditText, buttonIndex)
         }
 
-        // Add dynamic instruction fields
+        // Add dynamic instruction fields above the button
         val addInstructionButton = binding.addInstructionButton
         val recipeInstructionsLayout = binding.recipeInstructionsLayout
 
         addInstructionButton.setOnClickListener {
-            val instructionEditText = EditText(this)
-            instructionEditText.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            instructionEditText.hint = "Instruction"
-            recipeInstructionsLayout.addView(instructionEditText)
+            val instructionEditText = EditText(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                hint = "Instruction"
+                imeOptions = EditorInfo.IME_ACTION_DONE
+                setSingleLine(true)
+            }
+            // Add the EditText above the button
+            val buttonIndex = recipeInstructionsLayout.indexOfChild(addInstructionButton)
+            recipeInstructionsLayout.addView(instructionEditText, buttonIndex)
         }
 
         // Handle recipe image selection
@@ -166,7 +177,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
             }
         } else {
             isDraftClicked = false // Reset if validation fails
-            Toast.makeText(this, "Please complete all fields or login", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please complete name and description fields", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -226,28 +237,30 @@ class CreateRecipeFormActivity : AppCompatActivity() {
 
     private fun getCurrentRecipe(): Recipe? {
         // Get the current recipe data from the form
-        val name = binding.recipeNameEditText.text.toString()
-        val description = binding.recipeDescriptionEditText.text.toString()
+        val name = binding.recipeNameEditText.text.toString().trim()
+        val description = binding.recipeDescriptionEditText.text.toString().trim()
         val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
         val cookingTime = binding.recipeCookingTimeEditText.text.toString().toIntOrNull() ?: 0
 
+        // Clean and filter ingredients
         val ingredients = mutableListOf<String>()
         for (i in 0 until binding.recipeIngredientsLayout.childCount) {
             val view = binding.recipeIngredientsLayout.getChildAt(i)
             if (view is EditText) {
-                val ingredient = view.text.toString()
-                if (ingredient.isNotBlank()) {
+                val ingredient = view.text.toString().trim()
+                if (ingredient.isNotBlank()) { // Only add non-blank ingredients
                     ingredients.add(ingredient)
                 }
             }
         }
 
+        // Clean and filter instructions
         val instructions = mutableListOf<String>()
         for (i in 0 until binding.recipeInstructionsLayout.childCount) {
             val view = binding.recipeInstructionsLayout.getChildAt(i)
             if (view is EditText) {
-                val instruction = view.text.toString()
-                if (instruction.isNotBlank()) {
+                val instruction = view.text.toString().trim()
+                if (instruction.isNotBlank()) { // Only add non-blank instructions
                     instructions.add(instruction)
                 }
             }
@@ -268,29 +281,31 @@ class CreateRecipeFormActivity : AppCompatActivity() {
 
     private fun getCurrentDraftRecipe(): DraftRecipe? {
         // Get the current draft recipe data from the form
-        val name = binding.recipeNameEditText.text.toString()
-        val description = binding.recipeDescriptionEditText.text.toString()
+        val name = binding.recipeNameEditText.text.toString().trim()
+        val description = binding.recipeDescriptionEditText.text.toString().trim()
         val servings = binding.recipePortionsEditText.text.toString().toIntOrNull() ?: 0
         val cookingTime = binding.recipeCookingTimeEditText.text.toString().toIntOrNull() ?: 0
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return null
 
+        // Clean and filter ingredients
         val ingredients = mutableListOf<String>()
         for (i in 0 until binding.recipeIngredientsLayout.childCount) {
             val view = binding.recipeIngredientsLayout.getChildAt(i)
             if (view is EditText) {
-                val ingredient = view.text.toString()
-                if (ingredient.isNotBlank()) {
+                val ingredient = view.text.toString().trim()
+                if (ingredient.isNotBlank()) { // Only add non-blank ingredients
                     ingredients.add(ingredient)
                 }
             }
         }
 
+        // Clean and filter instructions
         val instructions = mutableListOf<String>()
         for (i in 0 until binding.recipeInstructionsLayout.childCount) {
             val view = binding.recipeInstructionsLayout.getChildAt(i)
             if (view is EditText) {
-                val instruction = view.text.toString()
-                if (instruction.isNotBlank()) {
+                val instruction = view.text.toString().trim()
+                if (instruction.isNotBlank()) { // Only add non-blank instructions
                     instructions.add(instruction)
                 }
             }
@@ -317,6 +332,10 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         binding.recipePortionsEditText.setText(draft.servings.toString())
         binding.recipeCookingTimeEditText.setText(draft.cookingTime.toString())
 
+        // Populate ingredients
+        val addIngredientButton = binding.addIngredientButton
+        val recipeIngredientsLayout = binding.recipeIngredientsLayout
+
         draft.ingredients.forEach { ingredient ->
             val ingredientEditText = EditText(this).apply {
                 setText(ingredient)
@@ -324,9 +343,18 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
+                hint = "Ingredient"
+                imeOptions = EditorInfo.IME_ACTION_DONE
+                setSingleLine(true)
             }
-            binding.recipeIngredientsLayout.addView(ingredientEditText)
+            // Add the ingredient EditText above the Add button
+            val buttonIndex = recipeIngredientsLayout.indexOfChild(addIngredientButton)
+            recipeIngredientsLayout.addView(ingredientEditText, buttonIndex)
         }
+
+        // Populate instructions
+        val addInstructionButton = binding.addInstructionButton
+        val recipeInstructionsLayout = binding.recipeInstructionsLayout
 
         draft.instructions.forEach { instruction ->
             val instructionEditText = EditText(this).apply {
@@ -335,10 +363,16 @@ class CreateRecipeFormActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
+                hint = "Instruction"
+                imeOptions = EditorInfo.IME_ACTION_DONE
+                setSingleLine(true)
             }
-            binding.recipeInstructionsLayout.addView(instructionEditText)
+            // Add the instruction EditText above the Add button
+            val buttonIndex = recipeInstructionsLayout.indexOfChild(addInstructionButton)
+            recipeInstructionsLayout.addView(instructionEditText, buttonIndex)
         }
 
+        // Load the image if available
         draft.imageUri?.let { uri ->
             val cachedUri = saveImageToCache(Uri.parse(uri))
             cachedUri?.let {
