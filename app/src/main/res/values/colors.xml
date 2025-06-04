@@ -22,10 +22,18 @@
 
     <!-- Brand Color -->
     <color name="brand_orange">#FF9800</color> <!-- Warna brand -->
-    <color name="brand_orange_tint">#FFF2CC</color> <!-- Warna brand -->
-    <color name="brand_orange_shade">#7A3400</color> <!-- Warna brand -->
-    
+    <color name="brand_orange_dark">#F57C00</color> <!-- Warna brand dark -->
+    <color name="brand_orange_tint">#FFF2CC</color> <!-- Warna brand tint -->
+    <color name="brand_orange_shade">#7A3400</color> <!-- Warna brand shade -->
+
+    <!-- Secondary Brand Color -->
+    <color name="brand_green">#4CAF50</color> <!-- Secondary brand color -->
+    <color name="brand_green_dark">#388E3C</color> <!-- Secondary brand dark color -->
+
     <!-- Bookmark Icon -->
     <color name="bookmark_icon">#FFE31A</color> <!-- Warna ikon bookmark -->
     <color name="bookmark_icon_tint">#FFF7A3</color> <!-- Warna ikon bookmark -->
+
+    <!-- Error Color -->
+    <color name="error">#B00020</color> <!-- Error color -->
 </resources>
