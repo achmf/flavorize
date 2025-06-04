@@ -1,5 +1,7 @@
 package com.example.flavorize.ui.activities.recipedetail
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -29,6 +31,8 @@ class RecipeDetailActivity : AppCompatActivity() {
         }
     )
 
+    private var isApiRecipe = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRecipeDetailBinding.inflate(layoutInflater)
@@ -36,33 +40,119 @@ class RecipeDetailActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[RecipeDetailViewModel::class.java]
 
+        isApiRecipe = intent.getBooleanExtra("is_api_recipe", false)
+
         setupToolbar() // Setup the toolbar
         setupSwipeToRefresh() // Setup swipe-to-refresh functionality
         setupObservers() // Observe LiveData from ViewModel
-        setupCommentsSection() // Setup comments section
 
-        // Get recipe data from intent
-        val recipe = intent.getParcelableExtra<Recipe>("recipe")
-        if (recipe != null) {
-            viewModel.setRecipe(recipe)
+        if (isApiRecipe) {
+            // Handle recipe from TheMealDB API
+            handleApiRecipe()
         } else {
-            Toast.makeText(this, "Recipe data not found", Toast.LENGTH_SHORT).show()
-            finish()
+            // Setup comments section for user recipes
+            setupCommentsSection()
+
+            // Handle recipe from Firestore
+            val recipe = intent.getParcelableExtra<Recipe>("recipe")
+            if (recipe != null) {
+                viewModel.setRecipe(recipe)
+            } else {
+                Toast.makeText(this, "Recipe data not found", Toast.LENGTH_SHORT).show()
+                finish()
+            }
         }
     }
 
+    private fun handleApiRecipe() {
+        // Extract data from intent extras
+        val mealId = intent.getStringExtra("meal_id") ?: ""
+        val mealName = intent.getStringExtra("meal_name") ?: "Unknown Recipe"
+        val mealCategory = intent.getStringExtra("meal_category") ?: ""
+        val mealArea = intent.getStringExtra("meal_area") ?: ""
+        val mealInstructions = intent.getStringExtra("meal_instructions") ?: ""
+        val mealImageUrl = intent.getStringExtra("meal_image_url") ?: ""
+        val mealYoutubeUrl = intent.getStringExtra("meal_youtube") ?: ""
+        val mealIngredients = intent.getStringArrayListExtra("meal_ingredients") ?: ArrayList()
+
+        // Set up collapsing toolbar with recipe name
+        binding.collapsingToolbar.title = mealName
+
+        binding.apply {
+            // Load recipe image
+            Glide.with(this@RecipeDetailActivity)
+                .load(mealImageUrl)
+                .placeholder(R.drawable.image1)
+                .error(R.drawable.image1)
+                .into(recipeImageView)
+
+            // Set recipe name and details
+            recipeNameTextView.text = mealName
+
+            // Set category and cuisine area as chips
+            recipeCategoryChip.text = mealCategory
+            recipeCategoryChip.visibility = if (mealCategory.isNotEmpty()) View.VISIBLE else View.GONE
+
+            recipeAreaChip.text = mealArea
+            recipeAreaChip.visibility = if (mealArea.isNotEmpty()) View.VISIBLE else View.GONE
+
+            // For API recipes, hide user information section
+            recipeUserSection.visibility = View.GONE
+            recipeDescriptionTextView.visibility = View.GONE
+
+            // Format and set ingredients
+            val ingredientsText = mealIngredients.joinToString("\n• ", "• ")
+            recipeIngredientsTextView.text = ingredientsText
+
+            // Format and set instructions with proper paragraphing
+            val formattedInstructions = mealInstructions
+                .split("\\r\\n|\\n|\\r".toRegex())
+                .filter { it.trim().isNotEmpty() }
+                .joinToString("\n\n")
+
+            recipeInstructionsTextView.text = formattedInstructions
+
+            // Set up YouTube link if available
+            if (mealYoutubeUrl.isNotEmpty()) {
+                youtubeButton.visibility = View.VISIBLE
+                youtubeButton.setOnClickListener {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(mealYoutubeUrl))
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(this@RecipeDetailActivity, "Cannot open YouTube link", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                youtubeButton.visibility = View.GONE
+            }
+
+            // Hide comments section for API recipes
+            commentsSection.visibility = View.GONE
+            submitCommentButton.visibility = View.GONE
+            commentEditText.visibility = View.GONE
+        }
+
+        // Hide loading indicator
+        binding.swipeRefreshLayout.isRefreshing = false
+    }
+
     private fun setupToolbar() {
-        // Setup the action bar with a back button
+        // Setup the toolbar
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         binding.toolbar.setNavigationOnClickListener { onBackPressed() }
     }
 
     private fun setupSwipeToRefresh() {
-        // Refresh comments when swipe-to-refresh is triggered
         binding.swipeRefreshLayout.setOnRefreshListener {
-            viewModel.recipe.value?.let { recipe ->
-                viewModel.fetchComments(recipe.id)
+            if (isApiRecipe) {
+                // For API recipes, just stop refreshing animation
+                binding.swipeRefreshLayout.isRefreshing = false
+            } else {
+                viewModel.recipe.value?.let { recipe ->
+                    viewModel.fetchComments(recipe.id)
+                }
             }
         }
     }
@@ -70,7 +160,9 @@ class RecipeDetailActivity : AppCompatActivity() {
     private fun setupObservers() {
         // Observe recipe LiveData and bind its details
         viewModel.recipe.observe(this) { recipe ->
-            bindRecipeDetails(recipe)
+            if (!isApiRecipe) {
+                bindRecipeDetails(recipe)
+            }
         }
 
         // Observe comments LiveData and update the comments adapter
@@ -93,30 +185,54 @@ class RecipeDetailActivity : AppCompatActivity() {
     }
 
     private fun bindRecipeDetails(recipe: Recipe) {
-        // Bind recipe details to the UI
+        // Set up collapsing toolbar with recipe name for Firestore recipes
+        binding.collapsingToolbar.title = recipe.name
+
+        // Bind user recipe details to the UI
         lifecycleScope.launch {
             val userName = FirestoreRepository().getUserNameById(recipe.userId)
             binding.recipeUserNameTextView.text = getString(R.string.recipe_created_by, userName)
         }
 
-        binding.recipeNameTextView.text = recipe.name
-        binding.recipeDescriptionTextView.text = recipe.description
-        binding.recipeServingsTextView.text = getString(R.string.recipe_servings, recipe.servings)
-        binding.recipeCookingTimeTextView.text = getString(R.string.recipe_cooking_time, recipe.cookingTime)
+        binding.apply {
+            // Basic recipe information
+            recipeNameTextView.text = recipe.name
+            recipeDescriptionTextView.text = recipe.description
+            recipeDescriptionTextView.visibility = View.VISIBLE
+            recipeServingsTextView.text = getString(R.string.recipe_servings, recipe.servings)
+            recipeCookingTimeTextView.text = getString(R.string.recipe_cooking_time, recipe.cookingTime)
 
-        val formattedIngredients = recipe.ingredients.mapIndexed { index, ingredient ->
-            "${index + 1}) $ingredient"
-        }.joinToString("\n\n")
-        binding.ingredientsTextView.text = formattedIngredients
+            // User section is visible for Firestore recipes
+            recipeUserSection.visibility = View.VISIBLE
 
-        val formattedSteps = recipe.instructions.mapIndexed { index, step ->
-            "${index + 1}) $step"
-        }.joinToString("\n\n")
-        binding.instructionsTextView.text = formattedSteps
+            // Format and set ingredients using item numbers for Firestore recipes
+            val formattedIngredients = recipe.ingredients.mapIndexed { index, ingredient ->
+                "${index + 1}) $ingredient"
+            }.joinToString("\n\n")
+            recipeIngredientsTextView.text = formattedIngredients
+
+            // Format and set instructions with item numbers for Firestore recipes
+            val formattedSteps = recipe.instructions.mapIndexed { index, step ->
+                "${index + 1}) $step"
+            }.joinToString("\n\n")
+            recipeInstructionsTextView.text = formattedSteps
+
+            // Hide category and area chips for Firestore recipes (use servings and cooking time instead)
+            recipeCategoryChip.visibility = View.GONE
+            recipeAreaChip.visibility = View.GONE
+
+            // Hide YouTube button for Firestore recipes
+            youtubeButton.visibility = View.GONE
+
+            // Comment section is visible for Firestore recipes
+            commentsSection.visibility = View.VISIBLE
+        }
 
         // Load recipe image using Glide
         Glide.with(this)
             .load(recipe.imageUrl)
+            .placeholder(R.drawable.image1)
+            .error(R.drawable.image1)
             .into(binding.recipeImageView)
     }
 
@@ -126,7 +242,7 @@ class RecipeDetailActivity : AppCompatActivity() {
         binding.commentsRecyclerView.adapter = commentsAdapter
 
         // Add a new comment when the button is clicked
-        binding.addCommentButton.setOnClickListener {
+        binding.submitCommentButton.setOnClickListener {
             val commentText = binding.commentEditText.text.toString().trim()
             if (commentText.isNotEmpty()) {
                 val newComment = RecipeComment(

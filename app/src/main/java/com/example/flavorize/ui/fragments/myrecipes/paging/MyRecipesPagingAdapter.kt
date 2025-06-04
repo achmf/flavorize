@@ -26,34 +26,25 @@ class MyRecipesPagingAdapter(
 
         // Bind recipe data to the UI components
         fun bind(recipe: Recipe) {
-            binding.recipeNameTextView.text = recipe.name
-            binding.recipeDescriptionTextView.text = recipe.description
-            binding.recipeServingsTextView.text = recipe.servings.toString()
-            binding.recipeCookingTimeTextView.text = "${recipe.cookingTime} min"
-            binding.recipeUserNameTextView.text = recipe.userName
+            // Set recipe name
+            binding.recipeName.text = recipe.name
+
+            // Set ingredients (joining first 3 ingredients with comma)
+            val ingredientsPreview = recipe.ingredients.take(3).joinToString(", ")
+            binding.recipeIngredients.text = ingredientsPreview
+
+            // Use category for description (trimmed)
+            binding.recipeCategory.text = recipe.description.take(20)
+
+            // Use area for cooking time
+            binding.recipeArea.text = recipe.cookingTime
 
             // Load recipe image using Glide
             Glide.with(binding.root.context)
                 .load(recipe.imageUrl)
-                .into(binding.recipeImageView)
-
-            // Set bookmark icon based on the recipe state
-            updateBookmarkIcon(recipe.isBookmarked)
-
-            // Handle bookmark icon click
-            binding.bookmarkIcon.setOnClickListener {
-                val newBookmarkStatus = !recipe.isBookmarked
-                updateBookmarkIcon(newBookmarkStatus)
-                onBookmarkToggle(recipe, newBookmarkStatus) { success ->
-                    if (!success) {
-                        // Revert the icon if bookmark toggle fails
-                        updateBookmarkIcon(recipe.isBookmarked)
-                    } else {
-                        recipe.isBookmarked = newBookmarkStatus
-                        notifyItemChanged(bindingAdapterPosition)
-                    }
-                }
-            }
+                .placeholder(R.drawable.image1)
+                .error(R.drawable.image1)
+                .into(binding.recipeImage)
 
             // Handle root click to navigate to RecipeDetailActivity
             binding.root.setOnClickListener {
@@ -97,16 +88,6 @@ class MyRecipesPagingAdapter(
             // Apply rounded corners to the dialog
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
             dialog.show()
-        }
-
-        // Update bookmark icon based on the state
-        private fun updateBookmarkIcon(isBookmarked: Boolean) {
-            val bookmarkIconRes = if (isBookmarked) {
-                R.drawable.ic_bookmark_filled
-            } else {
-                R.drawable.ic_bookmark_border
-            }
-            binding.bookmarkIcon.setImageResource(bookmarkIconRes)
         }
     }
 

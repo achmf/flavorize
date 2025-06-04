@@ -6,244 +6,406 @@
     android:layout_height="match_parent"
     android:focusable="true"
     android:focusableInTouchMode="true"
+    android:background="?attr/colorBackground"
     tools:context=".ui.activities.recipedetail.RecipeDetailActivity">
 
-    <!-- Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <!-- App Bar Layout with Collapsible Toolbar with Edge-to-Edge design -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:titleTextColor="?attr/colorOnPrimary"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        app:navigationIcon="@drawable/ic_back_arrow"
-        app:navigationIconTint="?attr/colorOnPrimary"
-        android:elevation="4dp" />
+        android:layout_height="300dp"
+        app:liftOnScroll="true"
+        android:fitsSystemWindows="true">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentScrim="?attr/colorPrimary"
+            app:expandedTitleMarginStart="24dp"
+            app:expandedTitleMarginBottom="48dp"
+            app:expandedTitleTextAppearance="@style/TextAppearance.MaterialComponents.Headline4"
+            app:collapsedTitleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
+            app:title=" "
+            android:fitsSystemWindows="true">
+
+            <!-- Recipe Image with Scrim -->
+            <ImageView
+                android:id="@+id/recipeImageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="Recipe Image"
+                app:layout_collapseMode="parallax"
+                app:layout_collapseParallaxMultiplier="0.7"
+                android:fitsSystemWindows="true"
+                tools:src="@drawable/image1" />
+
+            <!-- Gradient Scrim for better text visibility -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:layout_gravity="bottom"
+                android:background="@drawable/gradient_overlay_stronger"
+                app:layout_collapseMode="parallax" />
+
+            <!-- Toolbar -->
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:navigationIconTint="?attr/colorOnPrimary"
+                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <!-- SwipeRefreshLayout -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Nested ScrollView -->
+        <!-- Main Content ScrollView -->
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:background="?attr/colorBackground">
+            android:background="?attr/colorBackground"
+            android:overScrollMode="never">
 
-            <LinearLayout
+            <!-- Container with card-like appearance -->
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingBottom="80dp">
 
-                <!-- Recipe Details in CardView -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/recipeDetailCard"
-                    android:layout_width="match_parent"
+                <!-- Recipe Title -->
+                <TextView
+                    android:id="@+id/recipeNameTextView"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="4dp"
-                    app:shapeAppearanceOverlay="@style/RoundedBottomCornersOnly"
-                    android:backgroundTint="?attr/colorSurface"
-                    android:layout_marginBottom="16dp">
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnBackground"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginTop="24dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:text="Spaghetti Carbonara" />
+
+                <!-- Recipe Category Tags -->
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroup"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    app:singleLine="false"
+                    app:chipSpacingHorizontal="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/recipeNameTextView"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/recipeCategoryChip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/Widget.MaterialComponents.Chip.Action"
+                        app:chipBackgroundColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnPrimary"
+                        tools:text="Italian" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/recipeAreaChip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/Widget.MaterialComponents.Chip.Action"
+                        app:chipBackgroundColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnPrimary"
+                        tools:text="Italian" />
+                </com.google.android.material.chip.ChipGroup>
+
+                <!-- User Section (for regular recipes, hidden for API recipes) -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/recipeUserSection"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:contentPadding="16dp"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:layout_constraintTop_toBottomOf="@id/chipGroup"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Recipe Image -->
-                        <FrameLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="200dp">
+                        <TextView
+                            android:id="@+id/recipeUserNameTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="14sp"
+                            android:textStyle="italic"
+                            android:textColor="?attr/colorOnSurface"
+                            android:drawableStart="@drawable/ic_person"
+                            android:drawablePadding="8dp"
+                            tools:text="Created by: John Doe" />
 
-                            <ImageView
-                                android:id="@+id/recipeImageView"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop" />
-
-                            <!-- Overlay for decoration (optional) -->
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:background="@android:color/transparent" />
-                        </FrameLayout>
-
-                        <!-- Recipe Details -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <TextView
-                                android:id="@+id/recipeNameTextView"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:textColor="?attr/colorOnSurface" />
-
-                            <TextView
-                                android:id="@+id/recipeDescriptionTextView"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textSize="16sp"
-                                android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="8dp" />
-
-                            <TextView
-                                android:id="@+id/infoLabel"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Info:"
-                                android:textSize="18sp"
-                                android:textStyle="bold"
-                                android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="8dp" />
+                            android:orientation="horizontal"
+                            android:layout_marginTop="12dp">
 
                             <TextView
                                 android:id="@+id/recipeServingsTextView"
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:textSize="16sp"
+                                android:layout_weight="1"
+                                android:textSize="14sp"
                                 android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="8dp" />
+                                android:drawablePadding="8dp"
+                                tools:text="Serves: 4" />
 
                             <TextView
                                 android:id="@+id/recipeCookingTimeTextView"
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:textSize="16sp"
+                                android:layout_weight="1"
+                                android:textSize="14sp"
                                 android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="8dp" />
-
-                            <TextView
-                                android:id="@+id/recipeUserNameTextView"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textSize="16sp"
-                                android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="32dp" />
-
-                            <TextView
-                                android:id="@+id/ingredientsLabel"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Ingredients:"
-                                android:textSize="18sp"
-                                android:textStyle="bold"
-                                android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="8dp" />
-
-                            <TextView
-                                android:id="@+id/ingredientsTextView"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textSize="16sp"
-                                android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="16dp" />
-
-                            <TextView
-                                android:id="@+id/instructionsLabel"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Instructions:"
-                                android:textSize="18sp"
-                                android:textStyle="bold"
-                                android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="8dp" />
-
-                            <TextView
-                                android:id="@+id/instructionsTextView"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textSize="16sp"
-                                android:textColor="?attr/colorOnSurface"
-                                android:layout_marginBottom="16dp" />
+                                android:drawableStart="@drawable/ic_time"
+                                android:drawablePadding="8dp"
+                                tools:text="Time: 30 mins" />
                         </LinearLayout>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Recipe Description -->
+                <TextView
+                    android:id="@+id/recipeDescriptionTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="?attr/colorOnBackground"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    app:layout_constraintTop_toBottomOf="@id/recipeUserSection"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:text="A delicious Italian pasta dish that combines eggs, cheese, pancetta, and black pepper." />
+
+                <!-- Ingredients Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/ingredientsCard"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:layout_constraintTop_toBottomOf="@id/recipeDescriptionTextView"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Ingredients"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorPrimaryDark"
+                            android:drawablePadding="8dp" />
+
+                        <TextView
+                            android:id="@+id/recipeIngredientsTextView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginTop="12dp"
+                            android:lineSpacingMultiplier="1.2"
+                            tools:text="• 400g spaghetti\n• 200g pancetta\n• 4 large eggs\n• 50g pecorino cheese" />
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Comments Section -->
-                <TextView
-                    android:id="@+id/commentsLabel"
-                    android:layout_width="wrap_content"
+                <!-- Instructions Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/instructionsCard"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Comments:"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurface"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:strokeColor="?attr/colorOutline"
+                    app:layout_constraintTop_toBottomOf="@id/ingredientsCard"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/commentsRecyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    android:layout_marginBottom="16dp" />
-
-                <TextView
-                    android:id="@+id/noCommentsTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="No comments yet. Be the first to comment!"
-                    android:visibility="gone"
-                    android:layout_gravity="center"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp"
-                    android:padding="16dp" />
-
-
-                <!-- Add Comment Section -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/commentInputLayout"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="Write a comment"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:boxBackgroundMode="outline"
-                        app:boxStrokeColor="@color/text_input_stroke_color"
-                        app:hintTextColor="@color/text_input_hint_color"
-                        app:boxStrokeWidth="1dp"
-                        app:boxCornerRadiusTopStart="16dp"
-                        app:boxCornerRadiusTopEnd="16dp"
-                        app:boxCornerRadiusBottomStart="16dp"
-                        app:boxCornerRadiusBottomEnd="16dp">
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/commentEditText"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:padding="8dp"
+                            android:text="Instructions"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorPrimary"
+                            android:drawablePadding="8dp" />
+
+                        <TextView
+                            android:id="@+id/recipeInstructionsTextView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp"
                             android:textColor="?attr/colorOnSurface"
-                            android:textColorHint="?attr/colorOnSurface" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:layout_marginTop="12dp"
+                            android:lineSpacingMultiplier="1.2"
+                            tools:text="1. Cook the spaghetti in a large pot of salted boiling water.\n\n2. Meanwhile, fry the pancetta in a large pan until crispy." />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/addCommentButton"
-                        android:layout_width="wrap_content"
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Youtube Button (for API recipes) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/youtubeButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Watch on YouTube"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:padding="12dp"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_youtube"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toBottomOf="@id/instructionsCard"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:visibility="visible"/>
+
+                <!-- Comments Section (for regular recipes) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/commentsSection"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:layout_constraintTop_toBottomOf="@id/youtubeButton"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:backgroundTint="@color/brand_orange"
-                        android:text="Send"
-                        android:textColor="@color/white"
-                        app:cornerRadius="24dp"
-                        android:layout_marginStart="8dp"
-                        android:contentDescription="Post Comment" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                </LinearLayout>
-            </LinearLayout>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Comments"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorPrimary"
+                            android:drawableStart="@drawable/ic_comment"
+                            android:drawablePadding="8dp" />
+
+                        <TextView
+                            android:id="@+id/noCommentsTextView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="No comments yet. Be the first to comment!"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/commentsRecyclerView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:nestedScrollingEnabled="false" />
+
+                        <!-- Comment Input Field -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            app:boxStrokeColor="?attr/colorPrimary"
+                            app:endIconMode="clear_text"
+                            app:hintEnabled="true"
+                            app:hintAnimationEnabled="true"
+                            android:textColorHint="?attr/colorOnSurfaceVariant"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/commentEditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="Add a comment"
+                                android:textColor="?attr/colorOnSurface"
+                                android:inputType="textMultiLine"
+                                android:maxLines="3" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/submitCommentButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Submit Comment"
+                            android:layout_marginTop="12dp"
+                            app:cornerRadius="8dp"
+                            app:icon="@drawable/ic_send"
+                            app:iconGravity="textEnd" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

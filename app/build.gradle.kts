@@ -62,6 +62,12 @@ dependencies {
     // Glide
     implementation (libs.glide)
 
+    // Retrofit and OkHttp for API calls
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     // Paging 3
     implementation(libs.androidx.paging.runtime.ktx)
     implementation("androidx.paging:paging-common-ktx:3.3.4")
@@ -93,9 +99,9 @@ dependencies {
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.swiperefreshlayout)
-    kapt(libs.androidx.room.compiler) // Tambahkan ini untuk Room Compiler
+    kapt(libs.androidx.room.compiler)
 
-    implementation("com.google.code.gson:gson:2.11.0") // Versi terbaru GSON
+    implementation(libs.gson) // Versi terbaru GSON
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
