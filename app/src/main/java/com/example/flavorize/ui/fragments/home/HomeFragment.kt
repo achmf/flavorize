@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
@@ -48,8 +49,9 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupImageSwitcher()
+        setupSearchView()
         setupRecyclerView()
-        setupRefreshButton() // Add setup for refresh button
+        setupRefreshButton()
         observeViewModel()
     }
 
@@ -67,6 +69,43 @@ class HomeFragment : Fragment() {
 
         // Start the image switching animation
         handler.post(imageSwitcherRunnable)
+    }
+
+    private fun setupSearchView() {
+        // Set up the SearchView
+        val searchView = binding.searchView
+
+        // Configure SearchView behavior
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (!query.isNullOrBlank()) {
+                    viewModel.setSearchQuery(query)
+                    // Update section title
+                    binding.recipeSectionTitle.text = "Search Results"
+                    // Hide keyboard
+                    searchView.clearFocus()
+                }
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                if (newText.isNullOrBlank()) {
+                    // If search is cleared, show random recipes
+                    if (viewModel.isSearchActive.value == true) {
+                        viewModel.clearSearch()
+                        binding.recipeSectionTitle.text = "Random Recipes"
+                    }
+                }
+                return true
+            }
+        })
+
+        // Handle close button in SearchView
+        searchView.setOnCloseListener {
+            viewModel.clearSearch()
+            binding.recipeSectionTitle.text = "Random Recipes"
+            false
+        }
     }
 
     private fun setupRecyclerView() {
@@ -94,7 +133,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    // New method to set up the refresh button
+    // Set up the refresh button
     private fun setupRefreshButton() {
         binding.refreshButton.setOnClickListener {
             // Call the refresh method in viewmodel
@@ -123,6 +162,11 @@ class HomeFragment : Fragment() {
         // Observe dynamic info content and update the TextView
         viewModel.dynamicInfoContent.observe(viewLifecycleOwner) { content ->
             binding.infoContent.text = content
+        }
+
+        // Observe search mode changes
+        viewModel.isSearchActive.observe(viewLifecycleOwner) { isActive ->
+            binding.recipeSectionTitle.text = if (isActive) "Search Results" else "Random Recipes"
         }
 
         // Observe recipes from TheMealDB API

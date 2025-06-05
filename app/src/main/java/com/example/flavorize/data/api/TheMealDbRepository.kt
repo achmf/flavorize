@@ -161,6 +161,55 @@ import java.net.URL
     }
 
     /**
+     * Search meals by name
+     *
+     * @param query The search query
+     * @return Result containing a list of MealDbRecipe or an exception
+     */
+    suspend fun searchMeals(query: String): Result<List<MealDbRecipe>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
+                val connection = URL("${baseUrl}search.php?s=$encodedQuery").openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+
+                val responseCode = connection.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    val jsonObject = JSONObject(response)
+                    val mealsArray = jsonObject.optJSONArray("meals")
+
+                    val meals = mutableListOf<MealDbRecipe>()
+                    if (mealsArray != null) {
+                        for (i in 0 until mealsArray.length()) {
+                            val mealObject = mealsArray.getJSONObject(i)
+                            val meal = MealDbRecipe(
+                                id = mealObject.getString("idMeal"),
+                                name = mealObject.getString("strMeal"),
+                                category = mealObject.optString("strCategory", ""),
+                                area = mealObject.optString("strArea", ""),
+                                instructions = mealObject.optString("strInstructions", ""),
+                                imageUrl = mealObject.optString("strMealThumb", ""),
+                                youtubeUrl = mealObject.optString("strYoutube", ""),
+                                ingredients = extractIngredients(mealObject)
+                            )
+                            meals.add(meal)
+                        }
+                    }
+                    connection.disconnect()
+                    Result.success(meals)
+                } else {
+                    connection.disconnect()
+                    Result.failure(Exception("Failed to search meals: HTTP $responseCode"))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
      * Helper method to extract ingredients from JSONObject
      */
     private fun extractIngredients(jsonObject: JSONObject): List<String> {
@@ -210,6 +259,12 @@ import java.net.URL
          */
         @GET("lookup.php")
         suspend fun getMealById(@Query("i") id: String): MealDbApiResponse
+
+        /**
+         * Search meals by name
+         */
+        @GET("search.php")
+        suspend fun searchMeals(@Query("s") query: String): MealDbApiResponse
     }
 }
 

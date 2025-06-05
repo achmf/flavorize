@@ -28,4 +28,7 @@
     <!-- Bookmark Icon -->
     <color name="bookmark_icon">#FFE31A</color> <!-- Warna ikon bookmark -->
     <color name="bookmark_icon_tint">#FFF7A3</color> <!-- Warna ikon bookmark -->
+
+    <!-- Add orange button color -->
+    <color name="orange_button">#FF9800</color>
 </resources>
