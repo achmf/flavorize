@@ -42,6 +42,10 @@ class MyRecipesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize and show loading overlay with generic text
+        binding.loadingView.loadingOverlay.visibility = View.VISIBLE
+        binding.loadingView.loadingText.text = "Loading"
+
         // Set up the RecyclerView for displaying recipes
         setupRecyclerView()
         // Observe bookmark changes
@@ -53,21 +57,7 @@ class MyRecipesFragment : Fragment() {
     private fun setupRecyclerView() {
         myRecipesPagingAdapter = MyRecipesPagingAdapter(
             onEditRecipe = { navigateToEditRecipe(it) }, // Handle edit recipe action
-            onDeleteRecipe = { confirmDeleteRecipe(it) }, // Handle delete recipe action
-            onBookmarkToggle = { recipe, isBookmarking, onComplete ->
-                // Handle bookmark toggle
-                viewModel.toggleBookmark(recipe, isBookmarking, {
-                    onComplete(true)
-                    Toast.makeText(
-                        requireContext(),
-                        if (isBookmarking) "Bookmarked!" else "Bookmark removed!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }, { error ->
-                    onComplete(false)
-                    Toast.makeText(requireContext(), "Error: $error", Toast.LENGTH_SHORT).show()
-                })
-            }
+            onDeleteRecipe = { confirmDeleteRecipe(it) }  // Handle delete recipe action
         )
         // Set layout manager and adapter for RecyclerView
         binding.myRecipesRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
@@ -81,6 +71,8 @@ class MyRecipesFragment : Fragment() {
             lifecycleScope.launch {
                 viewModel.getPagedMyRecipes(userId).collectLatest { pagingData ->
                     myRecipesPagingAdapter.submitData(pagingData)
+                    // Hide loading overlay once data is loaded
+                    binding.loadingView.loadingOverlay.visibility = View.GONE
                 }
             }
 
@@ -95,10 +87,16 @@ class MyRecipesFragment : Fragment() {
 
                     binding.myRecipesRecyclerView.visibility =
                         if (isListEmpty) View.GONE else View.VISIBLE
+
+                    // Update loading overlay based on refresh state
+                    if (!isLoading) {
+                        binding.loadingView.loadingOverlay.visibility = View.GONE
+                    }
                 }
             }
         } else {
-            // Show error if user is not authenticated
+            // Hide loading and show error if user is not authenticated
+            binding.loadingView.loadingOverlay.visibility = View.GONE
             Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
         }
     }

@@ -3,6 +3,7 @@ package com.example.flavorize.ui.fragments.home.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
@@ -35,9 +36,18 @@ class RecipeCardAdapter(
     ) : RecyclerView.ViewHolder(itemView) {
         private val imageView: ImageView = itemView.findViewById(R.id.recipeImage)
         private val nameTextView: TextView = itemView.findViewById(R.id.recipeName)
-        private val categoryTextView: TextView = itemView.findViewById(R.id.recipeCategory)
-        private val areaTextView: TextView = itemView.findViewById(R.id.recipeArea)
+        private val cookingTimeTextView: TextView = itemView.findViewById(R.id.recipeCookingTime)
         private val ingredientsTextView: TextView = itemView.findViewById(R.id.recipeIngredients)
+        private val bookmarkButton: ImageButton = itemView.findViewById(R.id.bookmarkIcon)
+
+        // Find the clock icon in the recipe info bar
+        private val clockIcon: ImageView? = try {
+            val recipeInfoBar = itemView.findViewById<ViewGroup>(R.id.recipeInfoBar)
+            val timeContainer = recipeInfoBar.getChildAt(0) as? ViewGroup
+            timeContainer?.getChildAt(0) as? ImageView
+        } catch (_: Exception) {
+            null
+        }
 
         private var currentRecipe: MealDbRecipe? = null
 
@@ -47,6 +57,10 @@ class RecipeCardAdapter(
                     onItemClick(recipe)
                 }
             }
+
+            // Hide the clock icon and bookmark button in HomeFragment
+            clockIcon?.visibility = View.GONE
+            bookmarkButton.visibility = View.GONE
         }
 
         fun bind(recipe: MealDbRecipe) {
@@ -55,15 +69,11 @@ class RecipeCardAdapter(
             // Set recipe name
             nameTextView.text = recipe.name
 
-            // Set category and area
-            categoryTextView.text = recipe.category
-            areaTextView.text = recipe.area
+            // Set cooking time section to display area instead since cooking time isn't available
+            cookingTimeTextView.text = recipe.area
 
-            // Format and set ingredients (limited to first 5)
-            val ingredientsText = recipe.ingredients
-                .take(5)
-                .joinToString(", ")
-            ingredientsTextView.text = ingredientsText
+            // Use description instead of ingredients list
+            ingredientsTextView.text = recipe.category
 
             // Load image using Glide
             Glide.with(itemView.context)

@@ -29,7 +29,6 @@ import com.example.flavorize.ui.activities.bookmark.BookmarkedRecipesActivity
 import com.example.flavorize.ui.activities.draft.DraftedRecipesActivity
 import com.example.flavorize.ui.activities.main.viewmodel.MainViewModel
 import com.example.flavorize.ui.activities.profile.ProfileActivity
-import com.example.flavorize.ui.activities.settings.SettingsActivity
 import com.example.flavorize.ui.activities.auth.LoginActivity
 import com.example.flavorize.ui.fragments.myrecipes.MyRecipesFragment
 import com.example.flavorize.ui.fragments.recipes.RecipesFragment
@@ -155,12 +154,6 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_drafted -> {
                     // Open drafted recipes
                     startActivity(Intent(this, DraftedRecipesActivity::class.java))
-                    binding.drawerLayout.closeDrawers()
-                    true
-                }
-                R.id.navigation_settings -> {
-                    // Open settings
-                    startActivity(Intent(this, SettingsActivity::class.java))
                     binding.drawerLayout.closeDrawers()
                     true
                 }

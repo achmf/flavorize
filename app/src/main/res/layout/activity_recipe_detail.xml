@@ -21,11 +21,13 @@
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:contentScrim="?attr/colorPrimary"
+            app:contentScrim="@color/white"
             app:expandedTitleMarginStart="24dp"
             app:expandedTitleMarginBottom="48dp"
             app:expandedTitleTextAppearance="@style/TextAppearance.MaterialComponents.Headline4"
             app:collapsedTitleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+            app:expandedTitleTextColor="@android:color/white"
+            app:collapsedTitleTextColor="@android:color/black"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
             app:title=" "
             android:fitsSystemWindows="true">
@@ -56,7 +58,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
-                app:navigationIconTint="?attr/colorOnPrimary"
                 app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
@@ -83,33 +84,17 @@
                 android:layout_height="wrap_content"
                 android:paddingBottom="80dp">
 
-                <!-- Recipe Title -->
-                <TextView
-                    android:id="@+id/recipeNameTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnBackground"
-                    android:layout_marginStart="24dp"
-                    android:layout_marginEnd="24dp"
-                    android:layout_marginTop="24dp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    tools:text="Spaghetti Carbonara" />
-
                 <!-- Recipe Category Tags -->
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/chipGroup"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="24dp"
                     android:layout_marginStart="24dp"
                     android:layout_marginEnd="24dp"
                     app:singleLine="false"
                     app:chipSpacingHorizontal="8dp"
-                    app:layout_constraintTop_toBottomOf="@id/recipeNameTextView"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
@@ -118,8 +103,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         style="@style/Widget.MaterialComponents.Chip.Action"
-                        app:chipBackgroundColor="?attr/colorPrimary"
-                        android:textColor="?attr/colorOnPrimary"
+                        app:chipBackgroundColor="?attr/colorOnPrimary"
+                        android:textColor="?attr/colorPrimary"
                         tools:text="Italian" />
 
                     <com.google.android.material.chip.Chip
@@ -127,8 +112,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         style="@style/Widget.MaterialComponents.Chip.Action"
-                        app:chipBackgroundColor="?attr/colorPrimary"
-                        android:textColor="?attr/colorOnPrimary"
+                        app:chipBackgroundColor="?attr/colorOnPrimary"
+                        android:textColor="?attr/colorPrimary"
                         tools:text="Italian" />
                 </com.google.android.material.chip.ChipGroup>
 
@@ -220,9 +205,8 @@
                     android:layout_marginEnd="16dp"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="?attr/colorOutline"
-                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:strokeWidth="0dp"
+                    app:cardBackgroundColor="@color/white"
                     app:layout_constraintTop_toBottomOf="@id/recipeDescriptionTextView"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
@@ -239,7 +223,7 @@
                             android:text="Ingredients"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:textColor="?attr/colorPrimaryDark"
+                            android:textColor="#FF9800"
                             android:drawablePadding="8dp" />
 
                         <TextView
@@ -265,9 +249,8 @@
                     android:layout_marginEnd="16dp"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
-                    app:strokeWidth="1dp"
-                    app:cardBackgroundColor="?attr/colorSurface"
-                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="0dp"
+                    app:cardBackgroundColor="@color/white"
                     app:layout_constraintTop_toBottomOf="@id/ingredientsCard"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
@@ -284,7 +267,7 @@
                             android:text="Instructions"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="#FF9800"
                             android:drawablePadding="8dp" />
 
                         <TextView
@@ -306,14 +289,17 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="Watch on YouTube"
+                    android:textColor="@android:color/white"
                     android:layout_marginTop="24dp"
                     android:layout_marginStart="24dp"
                     android:layout_marginEnd="24dp"
                     android:padding="12dp"
                     app:cornerRadius="12dp"
                     app:icon="@drawable/ic_youtube"
+                    app:iconTint="@android:color/white"
                     app:iconGravity="textStart"
                     app:iconPadding="8dp"
+                    android:backgroundTint="#FF9800"
                     android:visibility="gone"
                     app:layout_constraintTop_toBottomOf="@id/instructionsCard"
                     app:layout_constraintStart_toStartOf="parent"
@@ -330,9 +316,8 @@
                     android:layout_marginEnd="16dp"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="?attr/colorOutline"
-                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:strokeWidth="0dp"
+                    app:cardBackgroundColor="@color/white"
                     app:layout_constraintTop_toBottomOf="@id/youtubeButton"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
@@ -349,8 +334,9 @@
                             android:text="Comments"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="#FF9800"
                             android:drawableStart="@drawable/ic_comment"
+                            app:drawableTint="#FF9800"
                             android:drawablePadding="8dp" />
 
                         <TextView
@@ -375,7 +361,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            app:boxStrokeColor="?attr/colorPrimary"
+                            app:boxStrokeColor="@color/black"
                             app:endIconMode="clear_text"
                             app:hintEnabled="true"
                             app:hintAnimationEnabled="true"
@@ -398,9 +384,12 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Submit Comment"
+                            android:textColor="@android:color/white"
                             android:layout_marginTop="12dp"
                             app:cornerRadius="8dp"
                             app:icon="@drawable/ic_send"
+                            app:iconTint="@android:color/white"
+                            android:backgroundTint="#FF9800"
                             app:iconGravity="textEnd" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>

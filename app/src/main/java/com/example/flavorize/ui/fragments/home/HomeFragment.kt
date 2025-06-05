@@ -49,6 +49,7 @@ class HomeFragment : Fragment() {
 
         setupImageSwitcher()
         setupRecyclerView()
+        setupRefreshButton() // Add setup for refresh button
         observeViewModel()
     }
 
@@ -93,6 +94,14 @@ class HomeFragment : Fragment() {
         }
     }
 
+    // New method to set up the refresh button
+    private fun setupRefreshButton() {
+        binding.refreshButton.setOnClickListener {
+            // Call the refresh method in viewmodel
+            viewModel.refreshRecipes()
+        }
+    }
+
     private fun observeViewModel() {
         // Observe images LiveData and set the first image
         viewModel.images.observe(viewLifecycleOwner) { images ->
@@ -131,7 +140,7 @@ class HomeFragment : Fragment() {
 
         // Observe loading state
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.loadingProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.loadingView.loadingOverlay.visibility = if (isLoading) View.VISIBLE else View.GONE
 
             // Hide error when loading
             if (isLoading) {

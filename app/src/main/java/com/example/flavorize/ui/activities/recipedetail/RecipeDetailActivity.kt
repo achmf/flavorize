@@ -8,6 +8,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -53,8 +54,14 @@ class RecipeDetailActivity : AppCompatActivity() {
             // Setup comments section for user recipes
             setupCommentsSection()
 
-            // Handle recipe from Firestore
-            val recipe = intent.getParcelableExtra<Recipe>("recipe")
+            // Handle recipe from Firestore - using backward-compatible approach instead of API 33-only method
+            val recipe = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra("recipe", Recipe::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra("recipe") as Recipe?
+            }
+
             if (recipe != null) {
                 viewModel.setRecipe(recipe)
             } else {
@@ -66,7 +73,6 @@ class RecipeDetailActivity : AppCompatActivity() {
 
     private fun handleApiRecipe() {
         // Extract data from intent extras
-        val mealId = intent.getStringExtra("meal_id") ?: ""
         val mealName = intent.getStringExtra("meal_name") ?: "Unknown Recipe"
         val mealCategory = intent.getStringExtra("meal_category") ?: ""
         val mealArea = intent.getStringExtra("meal_area") ?: ""
@@ -85,9 +91,6 @@ class RecipeDetailActivity : AppCompatActivity() {
                 .placeholder(R.drawable.image1)
                 .error(R.drawable.image1)
                 .into(recipeImageView)
-
-            // Set recipe name and details
-            recipeNameTextView.text = mealName
 
             // Set category and cuisine area as chips
             recipeCategoryChip.text = mealCategory
@@ -112,14 +115,14 @@ class RecipeDetailActivity : AppCompatActivity() {
 
             recipeInstructionsTextView.text = formattedInstructions
 
-            // Set up YouTube link if available
+            // Set up YouTube link if available - using KTX extension
             if (mealYoutubeUrl.isNotEmpty()) {
                 youtubeButton.visibility = View.VISIBLE
                 youtubeButton.setOnClickListener {
                     try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(mealYoutubeUrl))
+                        val intent = Intent(Intent.ACTION_VIEW, mealYoutubeUrl.toUri())
                         startActivity(intent)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         Toast.makeText(this@RecipeDetailActivity, "Cannot open YouTube link", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -141,7 +144,27 @@ class RecipeDetailActivity : AppCompatActivity() {
         // Setup the toolbar
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        binding.toolbar.setNavigationOnClickListener { onBackPressed() }
+
+        // Set initial navigation icon color to white (for expanded state)
+        binding.toolbar.navigationIcon?.setTint(resources.getColor(android.R.color.white, theme))
+
+        // Add offset change listener to AppBarLayout to detect collapse/expand
+        binding.appBarLayout.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
+            val isCollapsed = Math.abs(verticalOffset) >= appBarLayout.totalScrollRange * 0.8
+
+            // Change navigation icon color based on collapsed state
+            val navIconColor = if (isCollapsed) {
+                resources.getColor(android.R.color.black, theme) // Black when collapsed
+            } else {
+                resources.getColor(android.R.color.white, theme) // White when expanded
+            }
+            binding.toolbar.navigationIcon?.setTint(navIconColor)
+        }
+
+        binding.toolbar.setNavigationOnClickListener {
+            // Use onBackPressedDispatcher instead of deprecated onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
+        }
     }
 
     private fun setupSwipeToRefresh() {
@@ -195,8 +218,7 @@ class RecipeDetailActivity : AppCompatActivity() {
         }
 
         binding.apply {
-            // Basic recipe information
-            recipeNameTextView.text = recipe.name
+            // Basic recipe information - removed reference to recipeNameTextView
             recipeDescriptionTextView.text = recipe.description
             recipeDescriptionTextView.visibility = View.VISIBLE
             recipeServingsTextView.text = getString(R.string.recipe_servings, recipe.servings)

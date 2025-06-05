@@ -16,8 +16,7 @@ import com.example.flavorize.ui.activities.recipedetail.RecipeDetailActivity
 
 class MyRecipesPagingAdapter(
     private val onEditRecipe: (Recipe) -> Unit,
-    private val onDeleteRecipe: (Recipe) -> Unit,
-    private val onBookmarkToggle: (Recipe, Boolean, (Boolean) -> Unit) -> Unit
+    private val onDeleteRecipe: (Recipe) -> Unit
 ) : PagingDataAdapter<Recipe, MyRecipesPagingAdapter.RecipeViewHolder>(RecipeDiffCallback) {
 
     // ViewHolder to bind recipe data to the UI
@@ -29,15 +28,14 @@ class MyRecipesPagingAdapter(
             // Set recipe name
             binding.recipeName.text = recipe.name
 
-            // Set ingredients (joining first 3 ingredients with comma)
-            val ingredientsPreview = recipe.ingredients.take(3).joinToString(", ")
-            binding.recipeIngredients.text = ingredientsPreview
+            // Set description
+            binding.recipeIngredients.text = recipe.description
 
-            // Use category for description (trimmed)
-            binding.recipeCategory.text = recipe.description.take(20)
+            // Set cooking time
+            binding.recipeCookingTime.text = recipe.cookingTime
 
-            // Use area for cooking time
-            binding.recipeArea.text = recipe.cookingTime
+            // Hide bookmark icon in MyRecipesFragment
+            binding.bookmarkIcon.visibility = android.view.View.GONE
 
             // Load recipe image using Glide
             Glide.with(binding.root.context)

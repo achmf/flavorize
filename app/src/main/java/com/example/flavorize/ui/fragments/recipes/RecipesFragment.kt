@@ -43,6 +43,10 @@ class RecipesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize loading overlay without custom text
+        binding.loadingView.loadingOverlay.visibility = View.VISIBLE
+        binding.loadingView.loadingText.text = "Loading"
+
         // Setup RecyclerView for displaying recipes
         setupRecyclerView()
 
@@ -56,6 +60,8 @@ class RecipesFragment : Fragment() {
         lifecycleScope.launch {
             recipesViewModel.getPagedRecipes().collectLatest { pagingData ->
                 recipesPagingAdapter.submitData(pagingData)
+                // Hide loading overlay after data is loaded
+                binding.loadingView.loadingOverlay.visibility = View.GONE
             }
         }
     }

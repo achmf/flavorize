@@ -25,15 +25,11 @@ class RecipesPagingAdapter(
             // Set recipe name
             binding.recipeName.text = recipe.name
 
-            // Set ingredients (joining first 3 ingredients with comma)
-            val ingredientsPreview = recipe.ingredients.take(3).joinToString(", ")
-            binding.recipeIngredients.text = ingredientsPreview
+            // Set description instead of ingredients
+            binding.recipeIngredients.text = recipe.description
 
-            // Use category for description (trimmed)
-            binding.recipeCategory.text = recipe.description.take(20)
-
-            // Use area for cooking time
-            binding.recipeArea.text = recipe.cookingTime
+            // Set cooking time with "minutes" for better clarity
+            binding.recipeCookingTime.text = "${recipe.cookingTime} minutes"
 
             // Load recipe image using Glide
             Glide.with(binding.root.context)
@@ -41,6 +37,21 @@ class RecipesPagingAdapter(
                 .placeholder(R.drawable.image1)
                 .error(R.drawable.image1)
                 .into(binding.recipeImage)
+
+            // Set bookmark icon state
+            updateBookmarkIcon(recipe.isBookmarked)
+
+            // Handle bookmark icon click
+            binding.bookmarkIcon.setOnClickListener {
+                val newBookmarkState = !recipe.isBookmarked
+                // Call the callback with the recipe, new state, and a completion handler
+                onBookmarkToggle(recipe, newBookmarkState) { success ->
+                    if (success) {
+                        // If the operation was successful, update the UI
+                        updateBookmarkIcon(newBookmarkState)
+                    }
+                }
+            }
 
             // Navigate to RecipeDetailActivity on item click
             binding.root.setOnClickListener {
@@ -50,6 +61,14 @@ class RecipesPagingAdapter(
                 }
                 context.startActivity(intent)
             }
+        }
+
+        // Helper method to update bookmark icon based on bookmark state
+        private fun updateBookmarkIcon(isBookmarked: Boolean) {
+            binding.bookmarkIcon.setImageResource(
+                if (isBookmarked) R.drawable.ic_bookmark_filled
+                else R.drawable.ic_bookmark_border
+            )
         }
     }
 
@@ -74,7 +93,7 @@ class RecipesPagingAdapter(
 
             // Check if the content of items is the same
             override fun areContentsTheSame(oldItem: Recipe, newItem: Recipe): Boolean {
-                return oldItem == newItem
+                return oldItem == newItem && oldItem.isBookmarked == newItem.isBookmarked
             }
         }
     }

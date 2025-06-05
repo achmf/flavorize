@@ -23,13 +23,12 @@ class BookmarkedRecipesAdapter(
 
         // Bind recipe details to the UI elements
         fun bind(recipe: Recipe, context: Context) {
-            // Set recipe name and ingredients
+            // Set recipe name and description
             binding.recipeName.text = recipe.name
-            binding.recipeIngredients.text = recipe.ingredients.take(3).joinToString(", ")
+            binding.recipeIngredients.text = recipe.description
 
-            // Set category (using description as category) and area (using cooking time)
-            binding.recipeCategory.text = recipe.description.take(20)
-            binding.recipeArea.text = recipe.cookingTime
+            // Set cooking time
+            binding.recipeCookingTime.text = recipe.cookingTime
 
             // Load recipe image using Glide
             Glide.with(context)
@@ -37,6 +36,23 @@ class BookmarkedRecipesAdapter(
                 .placeholder(R.drawable.image1)
                 .error(R.drawable.image1)
                 .into(binding.recipeImage)
+
+            // In BookmarkedRecipesAdapter, always set isBookmarked to true initially
+            // since these are all bookmarked recipes
+            recipe.isBookmarked = true
+
+            // Set bookmark icon to filled (yellow) by default
+            binding.bookmarkIcon.setImageResource(R.drawable.ic_bookmark_filled)
+
+            // Setup bookmark click listener
+            binding.bookmarkIcon.setOnClickListener {
+                // Change to unbookmarked state first
+                recipe.isBookmarked = false
+                // Update UI to show unbookmarked state
+                binding.bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
+                // Notify callback to handle unbookmarking
+                onBookmarkToggle(recipe)
+            }
 
             // Open recipe details on card click
             binding.root.setOnClickListener {
