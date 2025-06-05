@@ -1,25 +1,30 @@
 package com.example.flavorize.ui.activities.createform
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.Gravity
+import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
-import com.example.flavorize.data.recipedraft.DraftRecipe
-import com.example.flavorize.data.recipedraft.DraftRecipeDatabase
+import com.example.flavorize.R
 import com.example.flavorize.data.Recipe
 import com.example.flavorize.data.SupabaseStorageRepository
+import com.example.flavorize.data.recipedraft.DraftRecipe
+import com.example.flavorize.data.recipedraft.DraftRecipeDatabase
 import com.example.flavorize.databinding.ActivityCreateRecipeFormBinding
 import com.example.flavorize.ui.activities.createform.viewmodel.CreateRecipeViewModel
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -88,18 +93,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val recipeIngredientsLayout = binding.recipeIngredientsLayout
 
         addIngredientButton.setOnClickListener {
-            val ingredientEditText = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                hint = "Ingredient"
-                imeOptions = EditorInfo.IME_ACTION_DONE
-                setSingleLine(true)
-            }
-            // Add the EditText above the button
-            val buttonIndex = recipeIngredientsLayout.indexOfChild(addIngredientButton)
-            recipeIngredientsLayout.addView(ingredientEditText, buttonIndex)
+            addIngredientField(recipeIngredientsLayout, addIngredientButton, "")
         }
 
         // Add dynamic instruction fields above the button
@@ -107,18 +101,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val recipeInstructionsLayout = binding.recipeInstructionsLayout
 
         addInstructionButton.setOnClickListener {
-            val instructionEditText = EditText(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                hint = "Instruction"
-                imeOptions = EditorInfo.IME_ACTION_DONE
-                setSingleLine(true)
-            }
-            // Add the EditText above the button
-            val buttonIndex = recipeInstructionsLayout.indexOfChild(addInstructionButton)
-            recipeInstructionsLayout.addView(instructionEditText, buttonIndex)
+            addInstructionField(recipeInstructionsLayout, addInstructionButton, "")
         }
 
         // Handle recipe image selection
@@ -129,9 +112,139 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         }
     }
 
+    private fun addIngredientField(parentLayout: LinearLayout, addButton: View, initialText: String = "") {
+        // Create a container for the field and remove button
+        val container = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 16)
+            }
+            orientation = LinearLayout.HORIZONTAL
+        }
+
+        // Create a styled ingredient input field
+        val inputLayout = TextInputLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1.0f
+            ).apply {
+                marginEnd = 8
+            }
+            boxBackgroundColor = 0
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            setBoxStrokeColorStateList(resources.getColorStateList(android.R.color.holo_orange_light, theme))
+            hintTextColor = resources.getColorStateList(android.R.color.holo_orange_light, theme)
+        }
+
+        val ingredientEditText = TextInputEditText(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setText(initialText)
+            hint = "Ingredient"
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            setSingleLine(true)
+        }
+
+        inputLayout.addView(ingredientEditText)
+
+        // Create delete button
+        val removeButton = ImageButton(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                48,
+                48
+            ).apply {
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            setImageResource(R.drawable.ic_close)
+            setBackgroundResource(0)
+            contentDescription = "Remove ingredient"
+            setOnClickListener {
+                parentLayout.removeView(container)
+            }
+        }
+
+        // Add views to container
+        container.addView(inputLayout)
+        container.addView(removeButton)
+
+        // Add the container above the button
+        val buttonIndex = parentLayout.indexOfChild(addButton)
+        parentLayout.addView(container, buttonIndex)
+    }
+
+    private fun addInstructionField(parentLayout: LinearLayout, addButton: View, initialText: String = "") {
+        // Create a container for the field and remove button
+        val container = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 16)
+            }
+            orientation = LinearLayout.HORIZONTAL
+        }
+
+        // Create a styled instruction input field
+        val inputLayout = TextInputLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1.0f
+            ).apply {
+                marginEnd = 8
+            }
+            boxBackgroundColor = 0
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            setBoxStrokeColorStateList(resources.getColorStateList(android.R.color.holo_orange_light, theme))
+            hintTextColor = resources.getColorStateList(android.R.color.holo_orange_light, theme)
+        }
+
+        val instructionEditText = TextInputEditText(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setText(initialText)
+            hint = "Instruction"
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            setSingleLine(true)
+        }
+
+        inputLayout.addView(instructionEditText)
+
+        // Create delete button
+        val removeButton = ImageButton(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                48,
+                48
+            ).apply {
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            setImageResource(R.drawable.ic_close)
+            setBackgroundResource(0)
+            contentDescription = "Remove instruction"
+            setOnClickListener {
+                parentLayout.removeView(container)
+            }
+        }
+
+        // Add views to container
+        container.addView(inputLayout)
+        container.addView(removeButton)
+
+        // Add the container above the button
+        val buttonIndex = parentLayout.indexOfChild(addButton)
+        parentLayout.addView(container, buttonIndex)
+    }
+
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         // Handle image selection result
-        if (result.resultCode == Activity.RESULT_OK) {
+        if (result.resultCode == RESULT_OK) {
             imageUri = result.data?.data
             binding.recipeImageView.setImageURI(imageUri)
         }
@@ -246,10 +359,14 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val ingredients = mutableListOf<String>()
         for (i in 0 until binding.recipeIngredientsLayout.childCount) {
             val view = binding.recipeIngredientsLayout.getChildAt(i)
-            if (view is EditText) {
-                val ingredient = view.text.toString().trim()
-                if (ingredient.isNotBlank()) { // Only add non-blank ingredients
-                    ingredients.add(ingredient)
+            if (view is LinearLayout) {
+                // Find the TextInputLayout in the container
+                val textInputLayout = view.getChildAt(0) as? TextInputLayout
+                textInputLayout?.editText?.let { editText ->
+                    val ingredient = editText.text.toString().trim()
+                    if (ingredient.isNotBlank()) { // Only add non-blank ingredients
+                        ingredients.add(ingredient)
+                    }
                 }
             }
         }
@@ -258,10 +375,14 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val instructions = mutableListOf<String>()
         for (i in 0 until binding.recipeInstructionsLayout.childCount) {
             val view = binding.recipeInstructionsLayout.getChildAt(i)
-            if (view is EditText) {
-                val instruction = view.text.toString().trim()
-                if (instruction.isNotBlank()) { // Only add non-blank instructions
-                    instructions.add(instruction)
+            if (view is LinearLayout) {
+                // Find the TextInputLayout in the container
+                val textInputLayout = view.getChildAt(0) as? TextInputLayout
+                textInputLayout?.editText?.let { editText ->
+                    val instruction = editText.text.toString().trim()
+                    if (instruction.isNotBlank()) { // Only add non-blank instructions
+                        instructions.add(instruction)
+                    }
                 }
             }
         }
@@ -291,10 +412,14 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val ingredients = mutableListOf<String>()
         for (i in 0 until binding.recipeIngredientsLayout.childCount) {
             val view = binding.recipeIngredientsLayout.getChildAt(i)
-            if (view is EditText) {
-                val ingredient = view.text.toString().trim()
-                if (ingredient.isNotBlank()) { // Only add non-blank ingredients
-                    ingredients.add(ingredient)
+            if (view is LinearLayout) {
+                // Find the TextInputLayout in the container
+                val textInputLayout = view.getChildAt(0) as? TextInputLayout
+                textInputLayout?.editText?.let { editText ->
+                    val ingredient = editText.text.toString().trim()
+                    if (ingredient.isNotBlank()) { // Only add non-blank ingredients
+                        ingredients.add(ingredient)
+                    }
                 }
             }
         }
@@ -303,10 +428,14 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val instructions = mutableListOf<String>()
         for (i in 0 until binding.recipeInstructionsLayout.childCount) {
             val view = binding.recipeInstructionsLayout.getChildAt(i)
-            if (view is EditText) {
-                val instruction = view.text.toString().trim()
-                if (instruction.isNotBlank()) { // Only add non-blank instructions
-                    instructions.add(instruction)
+            if (view is LinearLayout) {
+                // Find the TextInputLayout in the container
+                val textInputLayout = view.getChildAt(0) as? TextInputLayout
+                textInputLayout?.editText?.let { editText ->
+                    val instruction = editText.text.toString().trim()
+                    if (instruction.isNotBlank()) { // Only add non-blank instructions
+                        instructions.add(instruction)
+                    }
                 }
             }
         }
@@ -337,19 +466,7 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val recipeIngredientsLayout = binding.recipeIngredientsLayout
 
         draft.ingredients.forEach { ingredient ->
-            val ingredientEditText = EditText(this).apply {
-                setText(ingredient)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                hint = "Ingredient"
-                imeOptions = EditorInfo.IME_ACTION_DONE
-                setSingleLine(true)
-            }
-            // Add the ingredient EditText above the Add button
-            val buttonIndex = recipeIngredientsLayout.indexOfChild(addIngredientButton)
-            recipeIngredientsLayout.addView(ingredientEditText, buttonIndex)
+            addIngredientField(recipeIngredientsLayout, addIngredientButton, ingredient)
         }
 
         // Populate instructions
@@ -357,28 +474,16 @@ class CreateRecipeFormActivity : AppCompatActivity() {
         val recipeInstructionsLayout = binding.recipeInstructionsLayout
 
         draft.instructions.forEach { instruction ->
-            val instructionEditText = EditText(this).apply {
-                setText(instruction)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                hint = "Instruction"
-                imeOptions = EditorInfo.IME_ACTION_DONE
-                setSingleLine(true)
-            }
-            // Add the instruction EditText above the Add button
-            val buttonIndex = recipeInstructionsLayout.indexOfChild(addInstructionButton)
-            recipeInstructionsLayout.addView(instructionEditText, buttonIndex)
+            addInstructionField(recipeInstructionsLayout, addInstructionButton, instruction)
         }
 
         // Load the image if available
         draft.imageUri?.let { uri ->
-            val cachedUri = saveImageToCache(Uri.parse(uri))
+            val cachedUri = saveImageToCache(uri.toUri())
             cachedUri?.let {
                 val drawable = Drawable.createFromPath(it)
                 binding.recipeImageView.setImageDrawable(drawable)
-                imageUri = Uri.parse(it)
+                imageUri = it.toUri()
             }
         }
     }

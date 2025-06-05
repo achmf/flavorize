@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.flavorize.R
 import com.example.flavorize.data.api.MealDbRecipe
 import com.example.flavorize.data.api.TheMealDbRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class HomeFragmentViewModel : ViewModel() {
@@ -37,6 +39,17 @@ class HomeFragmentViewModel : ViewModel() {
     // Error state
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> get() = _error
+
+    // Search query
+    private val _searchQuery = MutableLiveData<String>("")
+    val searchQuery: LiveData<String> get() = _searchQuery
+
+    // Search mode active
+    private val _isSearchActive = MutableLiveData<Boolean>(false)
+    val isSearchActive: LiveData<Boolean> get() = _isSearchActive
+
+    // Variable to hold search job for debouncing
+    private var searchJob: Job? = null
 
     init {
         // Initialize the image list and index
@@ -92,6 +105,65 @@ class HomeFragmentViewModel : ViewModel() {
 
     // Refresh the recipes
     fun refreshRecipes() {
+        if (_isSearchActive.value == true) {
+            // If search is active, refresh the search results
+            searchMeals(_searchQuery.value ?: "")
+        } else {
+            // Otherwise, load random recipes
+            loadRandomRecipes()
+        }
+    }
+
+    // Set search query and trigger search
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+
+        // If query is empty and search was active, load random recipes
+        if (query.isEmpty() && _isSearchActive.value == true) {
+            _isSearchActive.value = false
+            loadRandomRecipes()
+            return
+        }
+
+        // Debounce search requests to avoid making too many API calls
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(500) // Wait for 500ms before searching
+            searchMeals(query)
+        }
+    }
+
+    // Search meals by name
+    private fun searchMeals(query: String) {
+        if (query.isBlank()) return
+
+        _isSearchActive.value = true
+        _isLoading.value = true
+        _error.value = null
+
+        viewModelScope.launch {
+            try {
+                val result = repository.searchMeals(query)
+                if (result.isSuccess) {
+                    _recipes.value = result.getOrNull() ?: emptyList()
+                    if ((result.getOrNull() ?: emptyList()).isEmpty()) {
+                        _error.value = "No recipes found for '$query'"
+                    }
+                } else {
+                    _error.value = result.exceptionOrNull()?.message ?: "Unknown error occurred"
+                }
+            } catch (e: Exception) {
+                _error.value = "Error: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // Clear search and return to random recipes
+    fun clearSearch() {
+        _searchQuery.value = ""
+        _isSearchActive.value = false
         loadRandomRecipes()
     }
 }
