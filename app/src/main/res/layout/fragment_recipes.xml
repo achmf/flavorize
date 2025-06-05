@@ -32,6 +32,13 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
+    <!-- Loading Overlay -->
+    <include
+        android:id="@+id/loadingView"
+        layout="@layout/layout_loading_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/createRecipeButton"

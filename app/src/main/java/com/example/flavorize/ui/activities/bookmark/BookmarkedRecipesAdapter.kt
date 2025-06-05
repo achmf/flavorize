@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.flavorize.R
@@ -22,22 +23,34 @@ class BookmarkedRecipesAdapter(
 
         // Bind recipe details to the UI elements
         fun bind(recipe: Recipe, context: Context) {
-            binding.recipeNameTextView.text = recipe.name
-            binding.recipeDescriptionTextView.text = recipe.description
-            binding.recipeServingsTextView.text = recipe.servings.toString()
-            binding.recipeCookingTimeTextView.text = "${recipe.cookingTime} min"
-            binding.recipeUserNameTextView.text = recipe.userName
+            // Set recipe name and description
+            binding.recipeName.text = recipe.name
+            binding.recipeIngredients.text = recipe.description
+
+            // Set cooking time
+            binding.recipeCookingTime.text = recipe.cookingTime
 
             // Load recipe image using Glide
             Glide.with(context)
                 .load(recipe.imageUrl)
-                .into(binding.recipeImageView)
+                .placeholder(R.drawable.image1)
+                .error(R.drawable.image1)
+                .into(binding.recipeImage)
 
-            // Set bookmark icon as filled
+            // In BookmarkedRecipesAdapter, always set isBookmarked to true initially
+            // since these are all bookmarked recipes
+            recipe.isBookmarked = true
+
+            // Set bookmark icon to filled (yellow) by default
             binding.bookmarkIcon.setImageResource(R.drawable.ic_bookmark_filled)
 
-            // Handle unbookmark action
+            // Setup bookmark click listener
             binding.bookmarkIcon.setOnClickListener {
+                // Change to unbookmarked state first
+                recipe.isBookmarked = false
+                // Update UI to show unbookmarked state
+                binding.bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
+                // Notify callback to handle unbookmarking
                 onBookmarkToggle(recipe)
             }
 
@@ -47,6 +60,23 @@ class BookmarkedRecipesAdapter(
                 intent.putExtra("recipe", recipe)
                 context.startActivity(intent)
             }
+        }
+    }
+
+    // Create a DiffUtil callback for efficient updates
+    private class RecipeDiffCallback(
+        private val oldList: List<Recipe>,
+        private val newList: List<Recipe>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize() = oldList.size
+        override fun getNewListSize() = newList.size
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition].id == newList[newItemPosition].id
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition] == newList[newItemPosition]
         }
     }
 
@@ -68,10 +98,14 @@ class BookmarkedRecipesAdapter(
     // Return the size of the recipe list
     override fun getItemCount(): Int = bookmarkedRecipes.size
 
-    // Update the adapter with new recipe data
+    // Update the adapter with new recipe data using DiffUtil for efficient updates
     fun updateBookmarkedRecipes(newRecipes: List<Recipe>) {
+        val diffCallback = RecipeDiffCallback(bookmarkedRecipes, newRecipes)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
         bookmarkedRecipes.clear()
         bookmarkedRecipes.addAll(newRecipes)
-        notifyDataSetChanged()
+
+        diffResult.dispatchUpdatesTo(this)
     }
 }

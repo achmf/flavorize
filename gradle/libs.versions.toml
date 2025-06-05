@@ -1,5 +1,5 @@
 [versions]
-agp = "8.6.1"
+agp = "8.10.1"
 credentials = "<latest version>"
 firebaseBom = "33.6.0"
 firebaseBomVersion = "33.6.0"
@@ -7,6 +7,7 @@ glide = "4.16.0"
 googleid = "<latest version>"
 gotrue = "0.5.0"
 gotrueKtx = "<latest_version>"
+gson = "2.11.0"
 kotlin = "1.9.24"
 coreKtx = "1.13.0"
 junit = "4.13.2"
@@ -50,6 +51,7 @@ google-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 gotrue = { module = "io.github.jshcrowthe.supabase-kt:gotrue", version.ref = "gotrue" }
 gotrue-ktx = { module = "io.supabase:gotrue-ktx", version.ref = "gotrueKtx" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

@@ -1,5 +1,6 @@
 package com.example.flavorize.ui.fragments.home
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,7 +11,10 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.GridLayoutManager
 import com.example.flavorize.databinding.FragmentHomeBinding
+import com.example.flavorize.ui.activities.recipedetail.RecipeDetailActivity
+import com.example.flavorize.ui.fragments.home.adapter.RecipeCardAdapter
 import com.example.flavorize.ui.fragments.home.viewmodel.HomeFragmentViewModel
 
 class HomeFragment : Fragment() {
@@ -20,6 +24,9 @@ class HomeFragment : Fragment() {
 
     // ViewModel instance
     private val viewModel: HomeFragmentViewModel by viewModels()
+
+    // Recipe adapter
+    private lateinit var recipeAdapter: RecipeCardAdapter
 
     private val handler = Handler(Looper.getMainLooper())
     private val imageSwitcherRunnable = object : Runnable {
@@ -41,6 +48,8 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupImageSwitcher()
+        setupRecyclerView()
+        setupRefreshButton() // Add setup for refresh button
         observeViewModel()
     }
 
@@ -58,6 +67,39 @@ class HomeFragment : Fragment() {
 
         // Start the image switching animation
         handler.post(imageSwitcherRunnable)
+    }
+
+    private fun setupRecyclerView() {
+        // Initialize the adapter with click listener
+        recipeAdapter = RecipeCardAdapter { recipe ->
+            // Navigate to RecipeDetailActivity with the selected recipe
+            val intent = Intent(requireContext(), RecipeDetailActivity::class.java).apply {
+                putExtra("meal_id", recipe.id)
+                putExtra("meal_name", recipe.name)
+                putExtra("meal_category", recipe.category)
+                putExtra("meal_area", recipe.area)
+                putExtra("meal_instructions", recipe.instructions)
+                putExtra("meal_image_url", recipe.imageUrl)
+                putExtra("meal_youtube", recipe.youtubeUrl)
+                putExtra("meal_ingredients", ArrayList(recipe.ingredients))
+                putExtra("is_api_recipe", true) // Flag to identify it's from API
+            }
+            startActivity(intent)
+        }
+
+        // Setup the RecyclerView with a 2-column grid layout
+        binding.recipesRecyclerView.apply {
+            layoutManager = GridLayoutManager(context, 2)
+            adapter = recipeAdapter
+        }
+    }
+
+    // New method to set up the refresh button
+    private fun setupRefreshButton() {
+        binding.refreshButton.setOnClickListener {
+            // Call the refresh method in viewmodel
+            viewModel.refreshRecipes()
+        }
     }
 
     private fun observeViewModel() {
@@ -81,6 +123,39 @@ class HomeFragment : Fragment() {
         // Observe dynamic info content and update the TextView
         viewModel.dynamicInfoContent.observe(viewLifecycleOwner) { content ->
             binding.infoContent.text = content
+        }
+
+        // Observe recipes from TheMealDB API
+        viewModel.recipes.observe(viewLifecycleOwner) { recipes ->
+            recipeAdapter.submitList(recipes)
+
+            // Show message if no recipes are found
+            if (recipes.isEmpty() && viewModel.error.value == null && viewModel.isLoading.value == false) {
+                binding.errorText.text = "No recipes found. Try again later."
+                binding.errorText.visibility = View.VISIBLE
+            } else {
+                binding.errorText.visibility = View.GONE
+            }
+        }
+
+        // Observe loading state
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.loadingView.loadingOverlay.visibility = if (isLoading) View.VISIBLE else View.GONE
+
+            // Hide error when loading
+            if (isLoading) {
+                binding.errorText.visibility = View.GONE
+            }
+        }
+
+        // Observe error state
+        viewModel.error.observe(viewLifecycleOwner) { error ->
+            if (!error.isNullOrEmpty()) {
+                binding.errorText.text = error
+                binding.errorText.visibility = View.VISIBLE
+            } else {
+                binding.errorText.visibility = View.GONE
+            }
         }
     }
 

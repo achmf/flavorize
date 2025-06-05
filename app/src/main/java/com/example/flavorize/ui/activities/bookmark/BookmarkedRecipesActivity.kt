@@ -22,6 +22,10 @@ class BookmarkedRecipesActivity : AppCompatActivity() {
         binding = ActivityBookmarkedRecipesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Initialize loading overlay
+        binding.loadingView.loadingOverlay.visibility = android.view.View.VISIBLE
+        binding.loadingView.loadingText.text = "Loading"
+
         setupToolbar() // Setup toolbar
         setupRecyclerView() // Setup recycler view
         setupObservers() // Observe ViewModel LiveData
@@ -50,14 +54,24 @@ class BookmarkedRecipesActivity : AppCompatActivity() {
     private fun setupObservers() {
         // Observe bookmarked recipes and update UI
         viewModel.bookmarkedRecipes.observe(this) { recipes ->
+            // Hide loading overlay when data is loaded
+            binding.loadingView.loadingOverlay.visibility = android.view.View.GONE
+
             bookmarkedRecipesAdapter.updateBookmarkedRecipes(recipes)
             if (recipes.isEmpty()) {
-                showToast("No bookmarked recipes found.")
+                binding.emptyStateTextView.visibility = android.view.View.VISIBLE
+                binding.bookmarkedRecipesRecyclerView.visibility = android.view.View.GONE
+            } else {
+                binding.emptyStateTextView.visibility = android.view.View.GONE
+                binding.bookmarkedRecipesRecyclerView.visibility = android.view.View.VISIBLE
             }
         }
 
         // Observe error messages and show them as toast
         viewModel.errorMessage.observe(this) { errorMessage ->
+            // Hide loading overlay on error
+            binding.loadingView.loadingOverlay.visibility = android.view.View.GONE
+
             errorMessage?.let {
                 showToast("Error: $it")
             }

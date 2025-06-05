@@ -8,9 +8,4 @@
         android:id="@+id/navigation_drafted"
         android:icon="@drawable/ic_draft"
         android:title="Drafted Recipes" />
-
-    <item
-        android:id="@+id/navigation_settings"
-        android:icon="@drawable/ic_settings"
-        android:title="Settings" />
 </menu>

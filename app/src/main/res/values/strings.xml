@@ -14,8 +14,8 @@
 
     <!-- Recipes -->
     <string name="recipe_servings">Servings: %1$d</string>
-    <string name="recipe_cooking_time">Cooking Time: %1$s min</string>
+    <string name="recipe_cooking_time">Cooking Time: %1$s minutes</string>
     <string name="recipe_created_by">by %1$s</string>
-    <string name="recipe_cooking_time_min">%1$s min</string>
+    <string name="recipe_cooking_time_min">%1$s minutes</string>
     <string name="options">Options</string>
 </resources>
